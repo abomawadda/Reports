@@ -1401,5 +1401,343 @@ load();const cfgOk=readCfgHash();render();fileInit();
 if(cfgOk)toast('تم ربط هذا الجهاز بـ Google Sheets');
 if(S.settings.sheetUrl&&S.settings.autoSync)syncNow(false);
 </script>
+<style>
+/* ===== تحسينات التصميم ===== */
+.card{transition:box-shadow .2s}.card:hover{box-shadow:0 4px 18px #5b2a8618}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--p2);outline-offset:1px}
+.btn{transition:background .15s,transform .1s}.btn:active{transform:scale(.97)}
+.tw{scrollbar-width:thin}
+.tools{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+.tools .card{margin:0;display:flex;flex-direction:column;gap:10px;border-top:4px solid var(--p2)}
+.tools .card h3{margin:0}.tools .card p{margin:0;color:var(--mut);font-size:13px}
+.tools .card.danger{border-top-color:var(--bad)}.tools .card.imp{border-top-color:var(--ok)}
+.trow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.trow select,.trow input{flex:1;min-width:120px;padding:7px;border:1px solid var(--line);border-radius:8px}
+.drop{border:2px dashed var(--p2);border-radius:14px;padding:22px;text-align:center;background:var(--pl);color:var(--p);font-weight:700;cursor:pointer}
+.drop.ov{background:#e2d3f0}
+body.dragging::after{content:'أفلت ملف Excel أو PDF للاستيراد';position:fixed;inset:12px;border:3px dashed var(--p);border-radius:20px;background:#5b2a8622;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:var(--p);z-index:99;pointer-events:none}
+.impm{border:1px solid var(--line);border-radius:12px;padding:10px;margin:10px 0}
+.impm .ih{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between}
+.impm table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px}
+.impm td,.impm th{border-bottom:1px solid var(--line);padding:4px 6px;text-align:right}
+.impm .scr{max-height:260px;overflow:auto}
+.badge{background:var(--pl);color:var(--p);border-radius:12px;padding:2px 10px;font-size:12px;font-weight:700}
+.badge.w{background:#fff3dc;color:var(--warn)}
+</style>
+<script>
+'use strict';
+/* ============ وحدة الأدوات والاستيراد (Excel / PDF) ============ */
+(function(){
+const PARTS=[['col','المتحصلات'],['jud','الأحكام والمصالحات'],['f1','نموذج 1'],['f2','نموذج 2'],['loy','صندوق الولاء'],['emps','العاملون والأجازات']];
+const EMPTY={col:()=>({}),jud:()=>({}),f1:()=>({}),f2:()=>({}),loy:()=>({for:[],ag:[],pend:[]}),emps:()=>[]};
+
+/* تسجيل التبويب الجديد */
+NAV.push(['أدوات',[['tools','🧰','أدوات واستيراد']]]);TABS.push(['tools','أدوات واستيراد']);
+const _rv=renderView;
+renderView=function(){if(S.ui.tab==='tools'){$('#view').innerHTML=vTools();return;}if(!M()&&S.ui.tab!=='tools')return _rv();_rv();};
+
+/* ---------- تطبيع النص العربي والأرقام ---------- */
+const AD='٠١٢٣٤٥٦٧٨٩',PD='۰۱۲۳۴۵۶۷۸۹';
+const digits=s=>String(s).replace(/[٠-٩]/g,d=>AD.indexOf(d)).replace(/[۰-۹]/g,d=>PD.indexOf(d));
+const nz=s=>digits(String(s==null?'':s).normalize('NFKC')).replace(/[ً-ْـ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/[^ء-يa-z0-9]/gi,'').toLowerCase();
+const rev=s=>[...String(s)].reverse().join('');
+function toNum(v){
+ if(typeof v==='number')return isFinite(v)?v:null;
+ if(v==null)return null;let s=digits(String(v).normalize('NFKC')).replace(/[٬،\s]/g,'').replace(/٫/g,'.').replace(/ج\.?م?\.?$/,'');
+ if(/^\(.*\)$/.test(s))s='-'+s.slice(1,-1);
+ if(!/^-?\d[\d,]*(\.\d+)?$/.test(s))return null;return parseFloat(s.replace(/,/g,''));
+}
+const MN=MONTHS.map(nz).concat(['ابريل','اغسطس','نوفمبر','ديسمبر'].map(nz));
+const MIDX=x=>{const i=MN.indexOf(x);return i<0?-1:i<12?i:[3,7,10,11][i-12];};
+const MALT={'كانونالثاني':0,'شباط':1,'اذار':2,'نيسان':3,'ايار':4,'حزيران':5,'تموز':6,'اب':7,'ايلول':8,'تشرينالاول':9,'تشرينالثاني':10,'كانونالاول':11,'jan':0,'feb':1,'mar':2,'apr':3,'may':4,'jun':5,'jul':6,'aug':7,'sep':8,'oct':9,'nov':10,'dec':11};
+/* يستخرج مفتاح الشهر YYYY-MM من نص */
+function monthOf(v){
+ if(v instanceof Date&&!isNaN(v))return v.getFullYear()+'-'+String(v.getMonth()+1).padStart(2,'0');
+ if(v==null)return '';let s=digits(String(v).normalize('NFKC'));
+ const w=s.replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').toLowerCase();
+ const w2=w.replace(/\d{1,2}\s*[\/.-]\s*\d{1,2}\s*[\/.-]\s*\d{2,4}/g,' ');const ym=w2.match(/(?<!\d)(20\d{2})(?!\d)/)||w2.match(/(?<!\d)(\d{2})(?!\d)/);
+ for(let i=0;i<MONTHS.length+4;i++){const raw=i<12?MONTHS[i]:['أبريل','أغسطس','نوفمبر','ديسمبر'][i-12];const k=raw.replace(/[أإآ]/g,'ا');
+  if(w.includes(k)){const y=ym?(ym[1].length===2?'20'+ym[1]:ym[1]):'';return y?y+'-'+String(MIDX(nz(raw))+1).padStart(2,'0'):'?-'+String(MIDX(nz(raw))+1).padStart(2,'0');}}
+ for(const [k,i] of Object.entries(MALT))if(k.length>2&&nz(w).includes(k)&&ym){const y=ym[1].length===2?'20'+ym[1]:ym[1];return y+'-'+String(i+1).padStart(2,'0');}
+ let m=s.replace(/\d{1,2}\s*[\/.-]\s*\d{1,2}\s*[\/.-]\s*20\d{2}/g,' ').match(/(20\d{2})\s*[-\/.]\s*(\d{1,2})(?!\d)/);if(m&&+m[2]>=1&&+m[2]<=12)return m[1]+'-'+m[2].padStart(2,'0');
+ m=s.replace(/\d{1,2}\s*[\/.-]\s*(\d{1,2}\s*[\/.-]\s*20\d{2})/g,' ').match(/(?<!\d)(\d{1,2})\s*[-\/.]\s*(20\d{2})/);if(m&&+m[1]>=1&&+m[1]<=12)return m[2]+'-'+m[1].padStart(2,'0');
+ return '';
+}
+const okKey=k=>/^\d{4}-\d{2}$/.test(k||'');
+
+/* ---------- قاموس الحقول المعروفة ---------- */
+let FIELDS=null;
+function fields(){
+ if(FIELDS)return FIELDS;const F=[];
+ const add=(path,label,parts,extra)=>F.push(Object.assign({path,label,parts:parts.map(nz).filter(Boolean)},extra||{}));
+ COLS.forEach(c=>{add('col.'+c[0],'المتحصلات – '+c[1],[c[1]]);if(c[4]!==c[1])add('col.'+c[0],'المتحصلات – '+c[1],[c[4]]);});
+ JUD.forEach(([t,its])=>its.forEach(([k,l])=>add('jud.'+k+'.amount','الأحكام – '+t+' – '+l,[t,l],{jud:k})));
+ [...F1,...F2].forEach(b=>b.rows.forEach(([l,base,ks])=>ks.forEach((sp,i)=>{const k=sp.split(':')[0];add(base+'.'+k,b.t+(l?' – '+l:'')+' – '+b.h[i],[b.t,l||'',b.h[i]],{hdr:b.h[i],row:l,blk:b.t});})));
+ F.forEach(f=>f.full=nz(f.parts.join('')));
+ return FIELDS=F;
+}
+const HDRS=()=>[...new Set(fields().filter(f=>f.hdr).map(f=>nz(f.hdr)))];
+const BLKS=()=>[...new Set(fields().filter(f=>f.blk).map(f=>nz(f.blk)))];
+const has=(a,b)=>a&&b&&(a.includes(b)||a.includes(rev(b)));
+
+/* ---------- محرك التعرف على شبكة الخلايا ----------
+   grid: مصفوفة صفوف، كل صف قائمة خلايا {v, x}. x موضع العمود (Excel = رقم العمود، PDF = الإحداثي الأفقي) */
+function parseGrid(grid,defMonth,src){
+ const out={},logs=[];let month=defMonth||'',blk='',hdr=null,monthCol=-1;
+ const put=(k,path,val,label)=>{if(!okKey(k))return;(out[k]=out[k]||{vals:{},emps:[],loy:{for:[],ag:[],pend:[]},src})[ 'vals'][path]={v:val,label};};
+ const H=HDRS(),B=BLKS(),F=fields();
+ for(let r=0;r<grid.length;r++){
+  const row=grid[r].filter(c=>c.v!==''&&c.v!=null);if(!row.length)continue;
+  const texts=row.filter(c=>toNum(c.v)===null&&!(c.v instanceof Date)),nums=row.filter(c=>toNum(c.v)!==null);
+  const rowTxt=nz(texts.map(c=>c.v).join(' '));
+  /* شهر مذكور في الصف */
+  if(nums.length<=2){const all=row.map(c=>c.v instanceof Date?'':c.v).join(' ');const mk=monthOf(all);if(okKey(mk)&&(/(شهر|بيان|تقرير|الفتر|month)/i.test(all)||(!nums.length&&texts.length<=2)||(nums.length===1&&texts.length===1&&monthOf(texts[0].v))))month=mk;}
+  /* عنوان قسم */
+  if(!nums.length){const b=B.find(b=>has(rowTxt,b));if(b&&texts.length<=2)blk=b;}
+  /* صف رؤوس أعمدة */
+  const hc=texts.filter(c=>H.some(h=>has(nz(c.v),h)));
+  if(hc.length>=2&&!nums.length){hdr=texts.map(c=>({x:c.x,t:nz(c.v)}));monthCol=texts.findIndex(c=>/^(الشهر|شهر|month)$/i.test(String(c.v).trim()));if(monthCol>=0)monthCol=texts[monthCol].x;continue;}
+  if(!nums.length){/* صف رؤوس بأسماء المتحصلات (جدول عريض) */
+   const ch=texts.filter(c=>F.some(f=>f.path.startsWith('col.')&&f.parts.some(p=>nz(c.v)===p)));
+   if(ch.length>=2){hdr=texts.map(c=>({x:c.x,t:nz(c.v)}));const mc=texts.find(c=>/^(الشهر|شهر|month)$/i.test(String(c.v).trim()));monthCol=mc?mc.x:-1;}
+   continue;}
+  /* شهر هذا الصف (جداول بعمود شهر) */
+  let rk=month;
+  if(monthCol>=0){const c=grid[r].find(c=>c.x===monthCol);const mk=c&&monthOf(c.v);if(okKey(mk))rk=mk;}
+  else{const d=row.find(c=>c.v instanceof Date);const t0=texts.length&&monthOf(texts[0].v);if(t0&&okKey(t0)&&texts.length>1)rk=t0;else if(d)rk=monthOf(d.v);}
+  /* 1) مطابقة نص الصف كاملاً لحقل (تنسيق: القسم | البند | القيمة) */
+  if(texts.length&&nums.length===1){
+   const cands=F.filter(f=>f.full.length>3&&(rowTxt===f.full||rowTxt.endsWith(f.full)||(f.parts.length>1&&f.parts.every(p=>has(rowTxt,p)))));
+   if(cands.length){const f=cands.sort((a,b)=>b.full.length-a.full.length)[0];put(rk,f.path,toNum(nums[0].v),f.label);continue;}
+  }
+  /* 2) خلايا رقمية تحت رؤوس أعمدة داخل قسم */
+  if(hdr){
+   const rl=rowTxt;
+   nums.forEach(c=>{
+    const h=hdr.reduce((a,h)=>Math.abs(h.x-c.x)<Math.abs(a.x-c.x)?h:a,hdr[0]);if(!h)return;
+    let cs=F.filter(f=>f.hdr&&has(h.t,nz(f.hdr))&&(!f.blk||!blk||nz(f.blk)===blk)&&(!f.row||has(rl,nz(f.row))));
+    if(blk)cs=cs.filter(f=>nz(f.blk)===blk);
+    if(!cs.length){cs=F.filter(f=>f.path.startsWith('col.')&&f.parts.some(p=>p===h.t));}
+    if(cs.length===1||(cs.length>1&&cs.every(f=>f.path===cs[0].path)))put(rk,cs[0].path,toNum(c.v),cs[0].label);
+    else if(cs.length>1){const w=cs.filter(f=>f.row&&has(rl,nz(f.row)));if(w.length===1)put(rk,w[0].path,toNum(c.v),w[0].label);}
+   });
+   continue;
+  }
+  /* 3) بند واحد بقيمة (نص + رقم) */
+  if(texts.length&&nums.length>=1){
+   const f=F.filter(f=>f.path.startsWith('col.')&&f.parts.some(p=>rowTxt===p||has(rowTxt,p))).sort((a,b)=>b.full.length-a.full.length)[0];
+   if(f)put(rk,f.path,toNum(nums[0].v),f.label);
+  }
+ }
+ return {out,month};
+}
+/* أوراق العاملين وصندوق الولاء */
+function parseTables(grid,defMonth,out,src){
+ for(let r=0;r<grid.length;r++){
+  const hdrRow=grid[r].map(c=>nz(c.v));
+  const empIdx=hdrRow.findIndex(t=>t===nz('اسم العامل'));
+  const loyIdx=hdrRow.findIndex(t=>t===nz('رقم الدعوى'));
+  if(empIdx<0&&loyIdx<0)continue;
+  const mc=grid[r].find(c=>/^(الشهر|شهر)$/.test(String(c.v).trim()));
+  const map=[];
+  if(empIdx>=0)grid[r].forEach(c=>{const f=EMPF.find(f=>nz(f[1])===nz(c.v));if(f)map.push([c.x,f[0],f[2]]);});
+  else{const all={};Object.values(LOY).forEach(t=>t.cols.forEach(c=>{all[nz(c[1])]=c[0];}));all[nz('الحكم / الاحتمالات')]='ruling';all[nz('العضو / المحامي')]='who';all[nz('احتمالات المكسب والخسارة')]='outlook';
+   grid[r].forEach(c=>{const k=all[nz(c.v)];if(k)map.push([c.x,k]);});}
+  const typeC=grid[r].find(c=>nz(c.v)===nz('النوع'));
+  for(r=r+1;r<grid.length;r++){
+   const row=grid[r];const g=x=>{const c=row.find(c=>c.x===x);return c?c.v:'';};
+   if(!row.some(c=>c.v!==''&&c.v!=null))break;
+   let k=defMonth;if(mc){const mk=monthOf(g(mc.x));if(okKey(mk))k=mk;}
+   if(!okKey(k))continue;
+   const o={};map.forEach(([x,key,ty])=>{let v=g(x);if(v instanceof Date)v=v.toISOString().slice(0,10);if(v!==''&&v!=null)o[key]=ty==='n'?(toNum(v)??v):ty==='chk'?(v&&v!=='لا'):String(v);});
+   if(!Object.keys(o).length)continue;
+   const t=out[k]=out[k]||{vals:{},emps:[],loy:{for:[],ag:[],pend:[]},src};
+   if(empIdx>=0){if(o.name)t.emps.push(o);}
+   else{let ty='pend';const tv=typeC?String(g(typeC.x)):'';if(/صالح/.test(tv))ty='for';else if(/ضد/.test(tv))ty='ag';else if(!typeC&&o.ruling)ty='for';
+    if(ty==='pend'&&o.ruling&&!o.outlook){o.outlook=o.ruling;delete o.ruling;}t.loy[ty].push(o);}
+  }
+ }
+}
+
+/* ---------- Excel ---------- */
+async function ensureXlsx(){if(!window.XLSX)await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');}
+async function readExcel(file){
+ await ensureXlsx();
+ const wb=XLSX.read(await file.arrayBuffer(),{type:'array',cellDates:true});const res={};const notes=[];
+ wb.SheetNames.forEach(name=>{
+  const aoa=XLSX.utils.sheet_to_json(wb.Sheets[name],{header:1,defval:'',raw:true});
+  const grid=aoa.map(r=>r.map((v,i)=>({v:typeof v==='string'?v.trim():v,x:i})));
+  /* شهر الورقة: من اسمها أو من أول صفوفها */
+  let mk=monthOf(name);
+  if(!okKey(mk)){for(const r of aoa.slice(0,8)){for(const c of r){const k=monthOf(c);if(okKey(k)){mk=k;break;}}if(okKey(mk))break;}}
+  const {out}=parseGrid(grid,okKey(mk)?mk:'',file.name+' ← '+name);
+  parseTables(grid,okKey(mk)?mk:'',out,file.name+' ← '+name);
+  const n=Object.keys(out).length;notes.push('ورقة «'+name+'»: '+(n?n+' شهر':'لم يُتعرف على بيانات')+(okKey(mk)?' ('+periodLabel(mk)+')':''));
+  mergeRes(res,out);
+ });
+ return {res,notes};
+}
+function mergeRes(res,out){Object.entries(out).forEach(([k,o])=>{const t=res[k]=res[k]||{vals:{},emps:[],loy:{for:[],ag:[],pend:[]},src:o.src};Object.assign(t.vals,o.vals);t.emps.push(...o.emps);['for','ag','pend'].forEach(x=>t.loy[x].push(...o.loy[x]));if(t.src.indexOf(o.src)<0)t.src+=' + '+o.src;});}
+
+/* ---------- PDF ---------- */
+async function ensurePdf(){
+ if(window.pdfjsLib)return;
+ await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+async function readPdf(file){
+ await ensurePdf();
+ const doc=await pdfjsLib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
+ const res={},notes=[];let month='',allText='';
+ for(let p=1;p<=doc.numPages;p++){
+  const pg=await doc.getPage(p),tc=await pg.getTextContent();
+  /* تجميع المقاطع في أسطر حسب الإحداثي الرأسي */
+  const items=tc.items.filter(i=>i.str&&i.str.trim()).map(i=>{const x0=i.transform[4],w=i.width||0;return {s:i.str.normalize('NFKC').trim(),x0,x1:x0+w,y:Math.round(i.transform[5]),h:Math.abs(i.transform[3])||10};});
+  const lines=[];items.sort((a,b)=>b.y-a.y).forEach(it=>{let l=lines.find(l=>Math.abs(l.y-it.y)<=3);if(!l)lines.push(l={y:it.y,c:[]});l.c.push(it);});
+  lines.sort((a,b)=>b.y-a.y);
+  /* دمج الحروف/المقاطع المتجاورة (من اليمين لليسار) في خلايا حسب المسافة بينها */
+  const grid=lines.map(l=>{l.c.sort((a,b)=>b.x1-a.x1);const cells=[];
+   l.c.forEach(it=>{const last=cells[cells.length-1];const gap=last?last.x0-it.x1:1e9;const lim=Math.max(4,it.h*.45);
+    const isN=toNum(it.s)!==null,lastN=last&&toNum(last.v)!==null;
+    if(last&&gap<lim&&!(isN!==lastN&&gap>1)){last.v=(gap>it.h*.2&&!isN?last.v+' '+it.s:isN&&lastN?it.s+last.v:last.v+it.s);last.x0=Math.min(last.x0,it.x0);}
+    else cells.push({v:it.s,x0:it.x0,x1:it.x1});});
+   return cells.map(c=>({v:c.v,x:(c.x0+c.x1)/2}));});
+  const txt=grid.map(r=>r.map(c=>c.v).join(' ')).join('\n');allText+=txt+'\n';
+  if(!month){const mm=txt.match(/(?:عن\s*)?شهر\s*[^\n]{0,25}/);const k=mm&&monthOf(mm[0]);if(okKey(k))month=k;}
+  const {out,month:m2}=parseGrid(grid,month,file.name+' ص'+p);if(okKey(m2))month=m2;
+  parseTables(grid,month,out,file.name);
+  mergeRes(res,out);
+ }
+ if(!okKey(month)){const k=monthOf(allText);if(okKey(k))month=k;}
+ /* ما لم يُحدد له شهر يُنسب للشهر المكتشف */
+ notes.push('عدد الصفحات: '+doc.numPages+(okKey(month)?' · الشهر المكتشف: '+periodLabel(month):' · لم يُكتشف الشهر – حدده يدوياً'));
+ if(!Object.keys(res).length){res[okKey(month)?month:'?']={vals:{},emps:[],loy:{for:[],ag:[],pend:[]},src:file.name,raw:allText};}
+ Object.values(res).forEach(o=>o.raw=o.raw||allText);
+ if(!allText.trim())notes.push('⚠️ الملف لا يحتوي نصاً قابلاً للقراءة (قد يكون صورة ممسوحة ضوئياً).');
+ return {res,notes};
+}
+
+/* ---------- معاينة الاستيراد ---------- */
+let PEND=null;
+async function importFiles(files){
+ const all={},notes=[];
+ for(const f of files){
+  try{toast('جارٍ قراءة '+f.name+' …');
+   const ext=f.name.split('.').pop().toLowerCase();let r;
+   if(ext==='pdf')r=await readPdf(f);
+   else if(['xlsx','xls','xlsm','csv','ods'].includes(ext))r=await readExcel(f);
+   else if(ext==='json'){const d=JSON.parse(await f.text());const n=mergeIn(d);cleanMonthKeys();persist();render();toast('تم استيراد '+n+' شهر من النسخة');continue;}
+   else{notes.push(f.name+': صيغة غير مدعومة');continue;}
+   mergeRes(all,r.res);notes.push(...r.notes.map(x=>f.name+' – '+x));
+  }catch(e){notes.push('⚠️ '+f.name+': '+(e.message||'تعذرت القراءة (تحقق من الاتصال بالإنترنت لتحميل المكتبة)'));}
+ }
+ PEND=Object.entries(all).map(([k,o])=>Object.assign({key:k,target:okKey(k)?k:''},o));
+ showPreview(notes);
+}
+function cnt(o){return Object.keys(o.vals).length+o.emps.length+o.loy.for.length+o.loy.ag.length+o.loy.pend.length;}
+function showPreview(notes){
+ const list=PEND||[];
+ const body=list.map((o,i)=>{
+  const ex=okKey(o.target)&&S.months[o.target];
+  const rows=Object.entries(o.vals).map(([p,x])=>'<tr><td><input type="checkbox" data-iv="'+i+'|'+p+'" checked></td><td>'+esc(x.label)+'</td><td><input type="number" step="any" data-ivv="'+i+'|'+p+'" value="'+esc(x.v)+'" style="width:120px"></td><td class="mut">'+(ex?esc(getP(ex,p)??''):'')+'</td></tr>').join('');
+  return '<div class="impm"><div class="ih"><label class="chk"><input type="checkbox" data-iuse="'+i+'" '+(cnt(o)?'checked':'')+'> <b>'+(okKey(o.key)?periodLabel(o.key):'شهر غير محدد')+'</b></label>'
+   +'<span class="badge">'+Object.keys(o.vals).length+' بند</span>'+(o.emps.length?'<span class="badge">'+o.emps.length+' عامل</span>':'')+((o.loy.for.length+o.loy.ag.length+o.loy.pend.length)?'<span class="badge">'+(o.loy.for.length+o.loy.ag.length+o.loy.pend.length)+' قضية ولاء</span>':'')
+   +'<label>إلى شهر <input type="month" data-itg="'+i+'" value="'+esc(o.target)+'" style="width:auto"></label>'+(ex?'<span class="badge w">موجود – سيتم التحديث</span>':okKey(o.target)?'<span class="badge">شهر جديد</span>':'')+'</div>'
+   +'<div class="mut" style="font-size:12px">المصدر: '+esc(o.src||'')+'</div>'
+   +(rows?'<div class="scr"><table><thead><tr><th></th><th>البند</th><th>القيمة المستوردة</th><th>القيمة الحالية</th></tr></thead><tbody>'+rows+'</tbody></table></div>':'')
+   +(o.raw&&!Object.keys(o.vals).length?'<details><summary>النص المستخرج من الملف</summary><textarea readonly style="width:100%;height:160px">'+esc(o.raw.slice(0,20000))+'</textarea></details>':'')
+   +'</div>';}).join('');
+ openModal('<h2>📥 معاينة الاستيراد</h2>'+(notes&&notes.length?'<ul class="mut">'+notes.map(n=>'<li>'+esc(n)+'</li>').join('')+'</ul>':'')
+  +(list.length?body:'<p>لم يتم التعرف على أي بيانات.</p>')
+  +'<div class="fg"><label class="chk"><input type="checkbox" id="impCarry" checked> عند إنشاء شهر جديد: ترحيل الأرصدة من الشهر السابق</label><label class="chk"><input type="checkbox" id="impRepl"> استبدال قوائم العاملين/الولاء بدلاً من الإضافة</label></div>'
+  +'<div class="btns">'+(list.length?'<button class="btn pri" data-act="impapply">✔️ تطبيق الاستيراد</button>':'')+'<button class="btn" data-act="closemodal">إلغاء</button></div>');
+}
+document.addEventListener('change',e=>{const t=e.target;if(!PEND||!t.dataset)return;
+ if(t.dataset.itg!==undefined){PEND[+t.dataset.itg].target=t.value;}
+ if(t.dataset.ivv!==undefined){const [i,p]=t.dataset.ivv.split('|');PEND[+i].vals[p].v=toNum(t.value);}
+ if(t.dataset.iv!==undefined){const [i,p]=t.dataset.iv.split('|');PEND[+i].vals[p].off=!t.checked;}
+ if(t.dataset.iuse!==undefined){PEND[+t.dataset.iuse].off=!t.checked;}
+});
+function applyImport(){
+ const carry=$('#impCarry').checked,repl=$('#impRepl').checked;let n=0,last=null;
+ const use=PEND.filter(o=>!o.off).sort((a,b)=>(a.target||'').localeCompare(b.target||''));
+ if(use.some(o=>!okKey(o.target)))return toast('حدد الشهر لكل مجموعة بيانات مختارة');
+ use.forEach(o=>{
+  const k=o.target;let m=S.months[k];
+  if(!m){m=newMonth(k,carry);S.months[k]=m;delete S.deleted[k];}
+  Object.entries(o.vals).forEach(([p,x])=>{if(x.off||x.v==null)return;setP(m,p,x.v);const j=p.match(/^jud\.(\w+)\.amount$/);if(j)setP(m,'jud.'+j[1]+'.mode','amount');});
+  if(o.emps.length)m.emps=repl?o.emps:mergeBy(m.emps,o.emps,'name');
+  ['for','ag','pend'].forEach(t=>{if(o.loy[t].length)m.loy[t]=repl?o.loy[t]:mergeBy(m.loy[t],o.loy[t],'no');});
+  m.updatedAt=now();n++;last=k;
+ });
+ PEND=null;if(last)S.ui.cur=last;closeModal();persist();render();toast('تم استيراد '+n+' شهر بنجاح');
+}
+function mergeBy(a,b,key){const r=(a||[]).slice();b.forEach(x=>{const i=x[key]?r.findIndex(y=>nz(y[key])===nz(x[key])):-1;if(i>=0)r[i]=Object.assign({},r[i],x);else r.push(x);});return r;}
+
+/* ---------- واجهة الأدوات ---------- */
+function vTools(){
+ const ks=monthKeys(),cur=S.ui.cur;
+ const mo=(sel)=>ks.slice().reverse().map(k=>'<option value="'+k+'"'+(k===sel?' selected':'')+'>'+periodLabel(k)+'</option>').join('');
+ const po=PARTS.map(([k,t])=>'<option value="'+k+'">'+t+'</option>').join('');
+ return '<div class="tools">'
+ +'<div class="card imp" style="grid-column:1/-1"><h3>📥 استيراد تلقائي من Excel أو PDF</h3><p>يتعرف على الشهر من اسم الورقة أو من عنوان التقرير، ويطابق أسماء البنود (المتحصلات، نماذج 1 و2، الأحكام، العاملون، صندوق الولاء) ثم يعرض معاينة قبل الحفظ. ملف Excel متعدد الأوراق: كل ورقة لشهر، أو ورقة واحدة بها عمود «الشهر».</p>'
+ +'<label class="drop" id="dropz">اسحب الملفات هنا أو اضغط للاختيار<br><small>xlsx · xls · csv · pdf · json</small><input type="file" id="impFile" accept=".xlsx,.xls,.xlsm,.csv,.ods,.pdf,.json" multiple hidden></label>'
+ +'<div class="trow"><button class="btn" data-act="tpl">⬇️ تنزيل قالب Excel جاهز للتعبئة</button></div></div>'
+ +'<div class="card danger"><h3>🗑️ حذف شهر</h3><p>يحذف كل بيانات الشهر المختار نهائياً (ويُحذف من Sheets عند المزامنة).</p><div class="trow"><select id="tDelM">'+mo(cur)+'</select><button class="btn bad" data-act="tdelm">حذف</button></div></div>'
+ +'<div class="card danger"><h3>🧹 تفريغ تبويب</h3><p>يمسح بيانات تبويب واحد فقط من شهر محدد مع الإبقاء على بقية البيانات.</p><div class="trow"><select id="tClrM">'+mo(cur)+'</select><select id="tClrP">'+po+'</select><button class="btn bad" data-act="tclr">تفريغ</button></div></div>'
+ +'<div class="card"><h3>📋 نسخ تبويب بين الشهور</h3><p>ينسخ بيانات تبويب من شهر إلى آخر (يستبدل بيانات هذا التبويب في الشهر الهدف).</p><div class="trow"><span>من</span><select id="tCpF">'+mo(ks[ks.indexOf(cur)-1]||cur)+'</select><span>إلى</span><select id="tCpT">'+mo(cur)+'</select></div><div class="trow"><select id="tCpP">'+po+'</select><button class="btn" data-act="tcopy">نسخ</button></div></div>'
+ +'<div class="card"><h3>🗓️ تكرار شهر</h3><p>ينشئ شهراً جديداً بنسخة كاملة من شهر موجود.</p><div class="trow"><select id="tDupF">'+mo(cur)+'</select><input type="month" id="tDupT"><button class="btn" data-act="tdup">تكرار</button></div></div>'
+ +'<div class="card"><h3>🔁 تغيير تاريخ شهر</h3><p>نقل بيانات شهر إلى شهر آخر (لتصحيح شهر أُدخل بالخطأ).</p><div class="trow"><select id="tMvF">'+mo(cur)+'</select><input type="month" id="tMvT"><button class="btn" data-act="tmove">نقل</button></div></div>'
+ +'<div class="card"><h3>🔗 إعادة ترحيل الأرصدة</h3><p>يجعل «تحت اليد» لكل شهر مساوياً لمتبقي الشهر السابق.</p><div class="trow"><button class="btn" data-act="rechain">إعادة الترحيل</button></div></div>'
+ +'<div class="card"><h3>💾 نسخ احتياطي وتصدير</h3><p>احفظ نسخة قبل أي عملية حذف أو استيراد كبيرة.</p><div class="trow"><button class="btn" data-act="json">JSON</button><button class="btn" data-act="xlsx">Excel</button><button class="btn" data-act="word">Word</button></div></div>'
+ +'</div>';
+}
+const val=id=>($('#'+id)||{}).value;
+Object.assign(ACT,{
+ tdelm(){const k=val('tDelM');if(k)ACT.delmonth(k);},
+ tclr(){const k=val('tClrM'),p=val('tClrP');const m=S.months[k];if(!m)return;const t=PARTS.find(x=>x[0]===p)[1];
+  if(!confirm('تفريغ «'+t+'» في '+periodLabel(k)+'؟'))return;m[p]=EMPTY[p]();normalize(m);m.updatedAt=now();persist();render();toast('تم تفريغ '+t);},
+ tcopy(){const f=S.months[val('tCpF')],t=S.months[val('tCpT')],p=val('tCpP');if(!f||!t)return;if(f===t)return toast('اختر شهرين مختلفين');
+  if(!confirm('استبدال «'+PARTS.find(x=>x[0]===p)[1]+'» في '+periodLabel(t.key)+' بنسخة من '+periodLabel(f.key)+'؟'))return;t[p]=clone(f[p]);normalize(t);t.updatedAt=now();persist();render();toast('تم النسخ');},
+ tdup(){const f=S.months[val('tDupF')],k=val('tDupT');if(!f||!okKey(k))return toast('اختر الشهر الجديد');if(S.months[k])return toast('هذا الشهر موجود بالفعل');
+  const m=clone(f);m.key=k;m.reportDate=reportIso(k);m.updatedAt=now();S.months[k]=normalize(m);delete S.deleted[k];S.ui.cur=k;persist();render();toast('تم إنشاء '+periodLabel(k));},
+ tmove(){const fk=val('tMvF'),k=val('tMvT');const f=S.months[fk];if(!f||!okKey(k))return toast('اختر الشهر الهدف');if(S.months[k])return toast('الشهر الهدف موجود بالفعل – احذفه أولاً');
+  if(!confirm('نقل بيانات '+periodLabel(fk)+' إلى '+periodLabel(k)+'؟'))return;
+  const m=clone(f);m.key=k;m.reportDate=reportIso(k);m.updatedAt=now();S.months[k]=normalize(m);delete S.deleted[k];delete S.months[fk];S.deleted[fk]=now();S.pendDel.push(fk);S.ui.cur=k;persist();render();toast('تم النقل');},
+ impapply(){applyImport();},
+ async tpl(){
+  try{await ensureXlsx();}catch(e){return toast('تعذر تحميل مكتبة Excel');}
+  const wb=XLSX.utils.book_new();const ks=monthKeys();const k=S.ui.cur||prevCal();
+  const rows=[['القسم','البند','القيمة']];const m=S.months[k];const v=m?ctx(m):null;
+  fields().forEach(f=>{if(f.path.endsWith('.tot')||f.path.endsWith('.coll'))return;const parts=f.label.split(' – ');rows.push([parts[0],parts.slice(1).join(' – '),v?(f.jud?(getP(m,f.path)??''):v(f.path)):'']);});
+  const seen=new Set();const uniq=rows.filter(r=>{const s=r.join('|');if(seen.has(s))return false;seen.add(s);return true;});
+  const ws=XLSX.utils.aoa_to_sheet(uniq);ws['!cols']=[{wch:34},{wch:44},{wch:16}];
+  XLSX.utils.book_append_sheet(wb,ws,periodLabel(k));
+  const emp=[['اسم العامل'].concat(EMPF.filter(c=>c[0]!=='name'&&c[2]!=='chk').map(c=>c[1]))];(m?m.emps:[]).forEach(e=>emp.push([e.name||''].concat(EMPF.filter(c=>c[0]!=='name'&&c[2]!=='chk').map(c=>e[c[0]]??''))));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(emp),'العاملون '+periodLabel(k));
+  const loy=[['النوع','رقم الدعوى','المحكمة المختصة','اسم المدعي','عدد المدعين','قيمة الالتزام','الحكم / الاحتمالات','التاريخ','العضو / المحامي']];
+  if(m)[['for','للصالح'],['ag','للضد'],['pend','متداولة']].forEach(([t,l])=>m.loy[t].forEach(x=>loy.push([l,x.no||'',x.court||'',x.plaintiff||'',x.cnt??'',x.amount??'',x.ruling||x.outlook||'',x.date||'',x.who||''])));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(loy),'الولاء '+periodLabel(k));
+  wb.Workbook={Views:[{RTL:true}]};XLSX.writeFile(wb,'قالب-استيراد-'+k+'.xlsx');
+  toast('القالب: كل ورقة باسم الشهر (مثل «'+periodLabel(k)+'») – انسخ الورقة لكل شهر وغيّر اسمها');
+ }
+});
+/* اختيار الملفات والسحب والإفلات */
+document.addEventListener('change',e=>{const t=e.target;if(t.id==='impFile'&&t.files.length){importFiles([...t.files]);t.value='';}});
+let dc=0;
+const isFiles=e=>e.dataTransfer&&[...(e.dataTransfer.types||[])].includes('Files');
+window.addEventListener('dragenter',e=>{if(!isFiles(e))return;e.preventDefault();dc++;document.body.classList.add('dragging');});
+window.addEventListener('dragleave',e=>{if(!isFiles(e))return;if(--dc<=0){dc=0;document.body.classList.remove('dragging');}});
+window.addEventListener('dragover',e=>{if(isFiles(e))e.preventDefault();});
+window.addEventListener('drop',e=>{if(!isFiles(e))return;e.preventDefault();dc=0;document.body.classList.remove('dragging');if(e.dataTransfer.files.length)importFiles([...e.dataTransfer.files]);});
+
+/* زر حذف الشهر في رأس الصفحة */
+const _hdr=renderHdr;
+renderHdr=function(){_hdr();const m=M(),h=$('#hdr .hdr');if(m&&h&&S.ui.tab!=='tools'){const b=document.createElement('div');b.className='btns';b.style.margin='0';b.innerHTML='<button class="btn sm" data-act="tab:tools" title="أدوات واستيراد">🧰 أدوات</button><button class="btn sm bad" data-act="delmonth:'+m.key+'" title="حذف هذا الشهر">🗑️ حذف الشهر</button>';h.appendChild(b);}};
+
+window.__imp={parseGrid,monthOf,toNum,fields,nz,importFiles,readExcel};
+render();
+})();
+</script>
+
 </body>
 </html>
