@@ -74,10 +74,18 @@ input.calc{background:#f7f4fb;color:var(--p)}input.calc.ov{background:#fff4d6;bo
 .mbox textarea.code{direction:ltr;text-align:left;font-family:Consolas,monospace;font-size:12px;height:190px}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:10px 18px;border-radius:24px;z-index:99;font-weight:600}
 .pages{display:flex;flex-direction:column;align-items:center;gap:18px;padding:6px 0 30px}
+.ri{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:10px;padding:4px 6px 4px 10px;background:#fff}
+.ori{border:1px solid var(--line);background:#faf8fc;color:var(--mut);border-radius:8px;padding:2px 8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+.ori.on{background:var(--p);border-color:var(--p);color:#fff}
 details summary{cursor:pointer;font-weight:700;color:var(--p)}
 ol.st{line-height:1.9;padding-right:20px}
 </style>
 <style id="sheetcss">
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
+body,button,input,select,textarea,.sheet,.sheet *{font-family:'Cairo','Segoe UI',Tahoma,Arial,sans-serif!important}
+.sheet .two.se>tbody>tr>td:first-child{width:32%}
+.sheet .two.se>tbody>tr>td:last-child{width:68%}
+.sheet .two.se .t th,.sheet .two.se .t td,.sheet .two.se .t th.rl{white-space:nowrap;padding-inline:5px}
 .sheet{position:relative;background:#fff;width:210mm;min-height:296mm;padding:11mm 13mm 16mm;box-shadow:0 2px 14px #0003;font-family:'Cairo','Segoe UI',Tahoma,Arial,sans-serif;font-size:11pt;line-height:1.5;color:#1d1b24;direction:rtl;text-align:right;page-break-after:always;break-after:page;overflow:hidden}
 .sheet::before{content:'';position:absolute;top:0;right:0;left:0;height:4mm;background:linear-gradient(90deg,#3d1a5c,#5b2a86 55%,#8a4fc0)}
 .sheet.land{width:297mm;min-height:208mm;padding:9mm 10mm 14mm;font-size:9pt;page:land}
@@ -270,11 +278,22 @@ td.lt-a{color:var(--lta)}td.lt-c{color:var(--ltc)}td.lt-s{color:var(--lts)}
 .sheet .t th{padding-block:calc(4px + var(--rp,0px))}
 .sheet .t td{padding-block:calc(3px + var(--rp,0px))}
 .sheet .t.cp th,.sheet .t.cp td{padding-block:calc(1.5px + var(--rp,0px))}
-@page{size:A4;margin:0}
+/* نموذج الأسماء والأجازات: خط أصغر للجدول */
+.sheet .t.r3{font-size:9pt;line-height:1.3}
+.sheet .t.r3 th,.sheet .t.r3 td{padding-inline:4px}
+.sheet .sig,.sheet .foot,.sheet .note,.sheet .hero{break-inside:avoid;page-break-inside:avoid}
+.sheet .bt{break-after:avoid;page-break-after:avoid}
+.sheet img{max-width:100%}
+@media screen{.sheet.ovf{outline:3px dashed #c0392b;outline-offset:3px}}
+@page{size:A4 portrait;margin:0}
 @page land{size:A4 landscape;margin:0}
 @media print{
  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ html,body{height:auto;background:#fff!important}
  body{background:#fff}
+ .sheet{min-height:0;height:296.5mm;page:auto}
+ .sheet.land{min-height:0;height:209.5mm;page:land}
+ main{overflow:visible}
  .noprint,.top,aside,.tabs,.hdr,.toast,.modal{display:none!important}
  .layout{display:block;padding:0;max-width:none}
  .pages{display:block;padding:0;zoom:1!important}
@@ -409,7 +428,7 @@ const LOY={
 };
 const LEAVE_TYPES=[{k:'leave',label:'اعتيادي',cls:'a'},{k:'leaveCas',label:'عارضة',cls:'c'},{k:'leaveSick',label:'مرضي',cls:'s'}];
 const leaveTotal=e=>LEAVE_TYPES.reduce((a,t)=>a+num(e[t.k]),0);
-const EMPF=[['no','الرقم'],['name','اسم العامل'],['qual','المؤهل الدراسي'],['grp','المجموعة الوظيفية'],['grade','الدرجة'],['job','العمل القائم به'],['syn','درجة القيد بالنقابة'],['synNo','رقم القيد بالنقابة'],['jobAllow','بدل الوظيفة','n'],['mgmtAllow','بدل الإدارة','n'],['leave','أجازات اعتيادي','n'],['r3job','المسمى في كشف الحجز (اختياري)'],['r3off','استبعاد من كشف الحجز','chk'],['leaveCas','أجازات عارضة','n'],['leaveSick','أجازات مرضي','n']];
+const EMPF=[['no','الرقم'],['name','اسم العامل'],['qual','المؤهل الدراسي'],['grp','المجموعة الوظيفية'],['grade','الدرجة'],['job','العمل القائم به'],['syn','درجة القيد بالنقابة'],['synNo','رقم القيد بالنقابة'],['jobAllow','بدل الوظيفة','n'],['mgmtAllow','بدل الإدارة','n'],['annualQuota','الرصيد الاعتيادي السنوي','n'],['leave','أجازات اعتيادي','n'],['r3job','المسمى في كشف الحجز (اختياري)'],['r3off','استبعاد من كشف الحجز','chk'],['leaveCas','أجازات عارضة','n'],['leaveSick','أجازات مرضي','n']];
 const NAV=[['المتابعة',[['dash','📊','لوحة المتابعة']]],['إدخال بيانات الشهر',[['col','💰','المتحصلات'],['jud','⚖️','الأحكام والمصالحات'],['f1','📋','نموذج 1'],['f2','📑','نموذج 2'],['loy','🏛️','صندوق الولاء'],['emp','👥','العاملون والأجازات']]],['المخرجات',[['prn','🖨️','المعاينة والطباعة']]]];
 const TABS=NAV.flatMap(g=>g[1].map(x=>[x[0],x[2]]));
 
@@ -420,7 +439,7 @@ const DEFAULT_SETTINGS={
  addr1:'السيد المستشار / رئيس قطاع الشئون القانونية لشركات المجموعة',addr2:'السيد المستشار / رئيس قطاع الشئون القانونية',
  sig1a:'رئيس قسم',sig1b:'تنفيذ الأحكام والمديونيات بالدقهلية',sig1c:'أ/ محمود العراقي',
  sig2a:'مدير إدارة',sig2b:'الشئون القانونية بالدقهلية',sig2c:'بهاء عبد العاطي إسماعيل – المحامي بالنقض',
- digits:'latin',hideNone:false,hideZero:false,colText:{},logo:'',sheetUrl:'https://script.google.com/macros/s/AKfycbxJBSfxytos91iiiNWS_ybFGezTZmM3pAbVaIwar9HjT9xVEZQD1U6-i6ZatejVDv4-Ig/exec',sheetToken:'Mawadda2030*#',sheetLink:'https://docs.google.com/spreadsheets/d/1KT67DXv5Kt0OvrdWtIG9e8CC8yNfzxjZGSASpT6JkZ8/edit',autoSync:true,leaveDays:21,casualDays:7,casualCounts:true,quota:{},allowRaisePct:0,allowBaseKey:'2025-11',updatedAt:''
+ digits:'latin',hideNone:false,hideZero:false,colText:{},logo:'',sheetUrl:'https://script.google.com/macros/s/AKfycbxJBSfxytos91iiiNWS_ybFGezTZmM3pAbVaIwar9HjT9xVEZQD1U6-i6ZatejVDv4-Ig/exec',sheetToken:'Mawadda2030*#',sheetLink:'https://docs.google.com/spreadsheets/d/1KT67DXv5Kt0OvrdWtIG9e8CC8yNfzxjZGSASpT6JkZ8/edit',autoSync:true,leaveDays:21,casualDays:7,sickDays:90,casualCounts:true,quota:{},allowRaisePct:0,allowBaseKey:'2025-11',updatedAt:''
 };
 let S={settings:clone(DEFAULT_SETTINGS),months:{},deleted:{},pendDel:[],pushed:{},ui:{cur:null,tab:'dash',sel:['r0','r1','r2','r3','r4','r5','r6','r7','r8']}};
 let fileHandle=null,needPerm=false,syncState='';
@@ -595,10 +614,15 @@ function pR2(m,v){
 }
 function pR3(m,v){
  const s=S.settings,list=(m.emps||[]).filter(e=>!e.r3off);
- const rows=list.map((e,i)=>{const lt=leaveText(leaveTotal(e));return [i+1,esc(e.no),esc(e.name),esc(e.r3job||e.job),leaveTotal(e)?'<span class="red">'+lt+'</span>':lt];});
+ const cellLv=x=>{x=num(x);return x?'<span class="red">'+leaveText(x)+'</span>':'لا يوجد';};
+ const rows=list.map((e,i)=>{
+  const a=num(e.leave),c=num(e.leaveCas),sk=num(e.leaveSick),tot=a+c+sk;
+  return '<tr><td>'+(i+1)+'</td><td class="num">'+esc(e.no)+'</td><td style="text-align:right;font-weight:700">'+esc(e.name)+'</td><td>'+esc(e.r3job||e.job)+'</td><td>'+cellLv(a)+'</td><td>'+cellLv(c)+'</td><td>'+cellLv(sk)+'</td><td>'+(tot?'<b class="red">'+leaveText(tot)+'</b>':'لا يوجد')+'</td></tr>';
+ }).join('');
+ const bodyTbl='<table class="t r3"><thead><tr><th rowspan="2" style="width:4%">م</th><th rowspan="2" style="width:9%">الرقم</th><th rowspan="2" style="width:26%">الاسم</th><th rowspan="2" style="width:21%">الوظيفة</th><th colspan="4">أيام الأجازات</th></tr><tr><th style="width:10%">اعتيادي</th><th style="width:10%">عارضة</th><th style="width:10%">مرضي</th><th style="width:10%">إجمالي</th></tr></thead><tbody>'+rows+'</tbody></table>';
  return letter(m,{subject:'بخصوص بيان المستحقين لمكافأة الحجز الإداري خلال شهر '+periodLabel(m.key),
   text:'بخصوص الموضوع بعاليه، نحيط علم سيادتكم أن أسماء المستحقين لمكافأة الحجز الإداري ب'+esc(s.dept)+' عن شهر '+periodLabel(m.key)+' كالتالي:',
-  body:tbl(['م','الرقم','الاسم','الوظيفة','أيام الأجازات'],rows)+'<div style="font-weight:700;margin-top:6px">برجاء التفضل بالعلم والإحاطة والتنبيه باللازم</div>',addr:2});
+  body:bodyTbl+'<div style="font-weight:700;margin-top:6px">برجاء التفضل بالعلم والإحاطة والتنبيه باللازم</div>',addr:2});
 }
 function pR4(m,v){
  const s=S.settings,hz=s.hideZero;
@@ -610,15 +634,22 @@ function pR4(m,v){
   const rows=b.rows.map(([l,base,ks])=>'<tr>'+(hasL?'<th class="rl">'+(l||'')+'</th>':'')+ks.map(sp=>{const [k,ty='']=sp.split(':');const x=v(base+'.'+k);return '<td>'+(ty.indexOf('$')>=0?fmt(x):fmtInt(x))+'</td>';}).join('')+'</tr>').join('');
   return '<div class="bt">'+b.t+'</div><table class="t"><thead><tr>'+(hasL?'<th></th>':'')+b.h.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>'+rows+'</tbody></table>';
  };
- const two=(a,b)=>{const x=blk(B(a)),y=blk(B(b));if(!x||!y)return x||y;return '<table class="two"><tr><td>'+x+'</td><td>'+y+'</td></tr></table>';};
+ const two=(a,b,cls)=>{const x=blk(B(a)),y=blk(B(b));if(!x||!y)return x||y;return '<table class="two '+(cls||'')+'"><tr><td>'+x+'</td><td>'+y+'</td></tr></table>';};
  const note=m.f1.note?'<div class="note"><b>ملحوظة:</b> '+esc(m.f1.note)+'</div>':'';
- return formSheet(m,'نموذج رقم 1',s.dept,blk(B('cass'))+two('settle','exe')+blk(B('crim'))+note+two('inv','cmp')+two('fat','con')+blk(B('seiz')));
+ return formSheet(m,'نموذج رقم 1',s.dept,blk(B('cass'))+two('settle','exe','se')+blk(B('crim'))+note+two('inv','cmp')+two('fat','con')+blk(B('seiz')));
 }
 function pR5(m,v){
  const s=S.settings,L='f2.lab.',n=x=>fmtInt(v(x));
- const blab=tbl(['تحت اليد متداول','تحت اليد أجازات','تحت اليد غير أجازات','للصالح أجازات','للضد أجازات','المتبقى أجازات'],[[n(L+'under'),n(L+'lu'),n(L+'nu'),n(L+'lf'),n(L+'la'),n(L+'lrem')]])
-  +tbl(['وارد أجازات','وارد غير أجازات','للصالح غير أجازات','للضد غير أجازات','المتبقى خلاف الأجازات'],[[n(L+'li'),n(L+'ni'),n(L+'nf'),n(L+'na'),n(L+'nrem')]])
-  +tbl(['تحت اليد متداول','إجمالي الأجازات (متداول)','إجمالي غير الأجازات (متداول)','إجمالي للصالح','إجمالي للضد','إجمالي الأحكام','المتبقى'],[[n(L+'circ'),n(L+'circL'),n(L+'circN'),n(L+'for'),n(L+'ag'),n(L+'jud'),n(L+'rem')]]);
+ const blab='<table class="t"><tbody>'
+  +'<tr><th rowspan="6" style="width:13%;vertical-align:middle;background:#5b2a86;color:#fff">تحت اليد متداول<br><span class="num" style="font-size:13pt;display:inline-block;margin-top:4px">'+n(L+'under')+'</span></th>'
+  +'<th>تحت اليد أجازات</th><th>تحت اليد غير أجازات</th><th>للصالح أجازات</th><th>للضد أجازات</th><th>المتبقى أجازات</th>'
+  +'<th rowspan="6" style="width:12%;vertical-align:middle;background:#5b2a86;color:#fff">المتبقى<br><span class="num" style="font-size:13pt;display:inline-block;margin-top:4px">'+n(L+'rem')+'</span></th></tr>'
+  +'<tr><td>'+n(L+'lu')+'</td><td>'+n(L+'nu')+'</td><td>'+n(L+'lf')+'</td><td>'+n(L+'la')+'</td><td>'+n(L+'lrem')+'</td></tr>'
+  +'<tr><th>وارد أجازات</th><th>وارد غير أجازات</th><th>للصالح غير أجازات</th><th>للضد غير أجازات</th><th>المتبقى خلاف الأجازات</th></tr>'
+  +'<tr><td>'+n(L+'li')+'</td><td>'+n(L+'ni')+'</td><td>'+n(L+'nf')+'</td><td>'+n(L+'na')+'</td><td>'+n(L+'nrem')+'</td></tr>'
+  +'<tr><th>إجمالي الأجازات (متداول)</th><th>إجمالي غير الأجازات (متداول)</th><th>إجمالي للصالح</th><th>إجمالي للضد</th><th>إجمالي الأحكام</th></tr>'
+  +'<tr><td>'+n(L+'circL')+'</td><td>'+n(L+'circN')+'</td><td>'+n(L+'for')+'</td><td>'+n(L+'ag')+'</td><td>'+n(L+'jud')+'</td></tr>'
+  +'</tbody></table>';
  const cv=b=>[n(b+'under'),n(b+'in'),n(b+'for'),n(b+'ag'),n(b+'tot'),n(b+'rem')];
  const civ=tbl(['','تحت اليد','الوارد','أحكام للصالح','أحكام للضد','إجمالي الأحكام','المتبقى'],[['من الشركة'].concat(cv('f2.civ.co.')),['ضد الشركة'].concat(cv('f2.civ.vs.')),['الإجمالي'].concat(cv('f2.civ.t.'))]);
  const app=tbl(['تحت اليد','الوارد','المنتهى','المتبقى'],[[n('f2.app.under'),n('f2.app.in'),n('f2.app.fin'),n('f2.app.rem')]]);
@@ -669,13 +700,13 @@ function pR9(m,v){
  return '<section class="sheet">'+lh(m)+'<div class="ttl">الإجماليات التراكمية لأعمال '+esc(S.settings.workTitle)+' – سنة '+y+'</div><div class="nom"><span>'+per+' ('+keys.length+' شهر)</span></div><div class="bt">المتحصلات والمصالحات</div>'+col+'<div class="bt">حركة الملفات والقضايا</div>'+mov+sig()+'</section>';
 }
 function pR10(m,v){
- const y=yearOf(m.key),L=leaveTable(y),keys=L.keys.filter(k=>k<=m.key);
+ const y=yearOf(m.key),L=leaveTable(y),keys=L.keys.filter(k=>k<=m.key),sq=sickQuotaOf();
  const sum=(r,f)=>keys.reduce((a,k)=>a+(r.m[k]?r.m[k][f]:0),0);
- const rows=L.rows.map(r=>{const a=sum(r,'a'),c=sum(r,'c'),sk=sum(r,'s'),ded=a+(S.settings.casualCounts!==false?c:0),rem=r.quota-ded;return [esc(r.name),fmtInt(r.quota),fmtInt(a),fmtInt(c),fmtInt(ded),'<b class="'+(rem<0?'red':'')+'">'+fmtInt(rem)+'</b>',fmtInt(num(S.settings.casualDays)-c),fmtInt(sk)];});
+ const rows=L.rows.map(r=>{const a=sum(r,'a'),c=sum(r,'c'),sk=sum(r,'s'),ded=a+(S.settings.casualCounts!==false?c:0),rem=r.quota-ded,srem=sq-sk;return [esc(r.name),fmtInt(r.quota),fmtInt(a),fmtInt(c),fmtInt(ded),'<b class="'+(rem<0?'red':'')+'">'+fmtInt(rem)+'</b>',fmtInt(num(S.settings.casualDays)-c),fmtInt(sk),fmtInt(srem)];});
  const col=i=>rows.reduce((x,r)=>x+num(String(r[i]).replace(/<[^>]*>/g,'').replace(/,/g,'')),0);
- const tot=['الإجمالي',fmtInt(col(1)),fmtInt(col(2)),fmtInt(col(3)),fmtInt(col(4)),fmtInt(col(5)),'',fmtInt(col(7))];
+ const tot=['الإجمالي',fmtInt(col(1)),fmtInt(col(2)),fmtInt(col(3)),fmtInt(col(4)),fmtInt(col(5)),'',fmtInt(col(7)),''];
  const mm=tbl(['الشهر','اعتيادي','عارضة','مرضي','الإجمالي'],keys.map(k=>{const es=S.months[k].emps||[],a=es.reduce((x,e)=>x+num(e.leave),0),c=es.reduce((x,e)=>x+num(e.leaveCas),0),sk=es.reduce((x,e)=>x+num(e.leaveSick),0);return [periodLabel(k),fmtInt(a),fmtInt(c),fmtInt(sk),'<b>'+fmtInt(a+c+sk)+'</b>'];}),'cp');
- return '<section class="sheet">'+lh(m)+'<div class="ttl">كشف أجازات العاملين ورصيدها السنوي – سنة '+y+'</div><div class="nom"><span>حتى '+periodLabel(m.key)+'</span></div>'+tbl(['العامل','الرصيد السنوي','اعتيادي','عارضة','المخصوم من الرصيد','المتبقي','عارضة متبقية','مرضي'],rows.concat([tot]))+'<div class="bt">توزيع الأجازات على الشهور</div>'+mm+'<div class="note">المتبقي = الرصيد السنوي ('+fmtInt(S.settings.leaveDays)+' يوماً افتراضياً) − (اعتيادي'+(S.settings.casualCounts!==false?' + عارضة':'')+'). العارضة حدها '+fmtInt(S.settings.casualDays)+' أيام سنوياً. المرضي للعلم ولا يخصم من الرصيد.</div>'+sig()+'</section>';
+ return '<section class="sheet">'+lh(m)+'<div class="ttl">كشف أجازات العاملين ورصيدها السنوي – سنة '+y+'</div><div class="nom"><span>حتى '+periodLabel(m.key)+'</span></div>'+tbl(['العامل','الاعتيادي المستحق','اعتيادي','عارضة','المخصوم','متبقي اعتيادي','عارضة متبقية','مرضي','متبقي مرضي (من '+fmtInt(sq)+')'],rows.concat([tot]))+'<div class="bt">توزيع الأجازات على الشهور</div>'+mm+'<div class="note">الرصيد الاعتيادي السنوي يُحدَّد لكل موظف حسب مدة الخدمة والسن. المتبقي الاعتيادي = الرصيد المستحق − (اعتيادي'+(S.settings.casualCounts!==false?' + عارضة':'')+'). العارضة ثابتة ('+fmtInt(S.settings.casualDays)+' أيام سنوياً). المرضي افتراضياً 3 أشهر ('+fmtInt(sq)+' يوماً) لكل موظف ولا يخصم من الرصيد الاعتيادي.</div>'+sig()+'</section>';
 }
 const REPORTS=[
  ['r0','الملخص التنفيذي للشهر',pR0],['r1','متحصلات قسم تنفيذ الأحكام والمديونيات',pR1],['r2','بيان المبالغ الخاصة بالأحكام والمصالحات',pR2],['r3','مستحقو مكافأة الحجز الإداري',pR3],
@@ -683,12 +714,18 @@ const REPORTS=[
  ['r7','قضايا صندوق الولاء المتداولة',pR7],['r8','نموذج رقم 7 – بيان العاملين',pR8],
  ['r9','الإجماليات التراكمية للسنة (إضافي)',pR9],['r10','كشف الأجازات ورصيدها السنوي (إضافي)',pR10]
 ];
+/* اتجاه كل ورقة: افتراضياً نموذج 7 أفقي وباقي التقارير رأسية، ويمكن تغييره من شاشة الطباعة */
+const DEF_LAND=['r8'];
+function orientOf(id){const o=S.ui.orient&&S.ui.orient[id];return o||(DEF_LAND.includes(id)?'land':'port');}
+function selReports(){return REPORTS.filter(r=>S.ui.sel.includes(r[0]));}
 function pagesHtml(m){
- const v=ctx(m),rs=REPORTS.filter(r=>S.ui.sel.includes(r[0])),n=rs.length,s=S.settings;
- return rs.map((r,i)=>{const h=r[2](m,v),mt=h.match(/^<section class="([^"]*)">/);
+ const v=ctx(m),rs=selReports(),n=rs.length,s=S.settings;
+ return rs.map((r,i)=>{let h=r[2](m,v);
+  h=h.replace(/^<section class="([^"]*)">/,(x,c)=>{c=c.replace(/\s*\bland\b/g,'');return '<section class="'+c+(orientOf(r[0])==='land'?' land':'')+'" data-rid="'+r[0]+'">';});
+  const mt=h.match(/^<section class="([^"]*)"[^>]*>/);
   const pf='<div class="pf"><span>'+esc(s.org)+' – '+esc(s.dept)+' · '+esc(r[1])+'</span><span>'+periodLabel(m.key)+' · صفحة '+(i+1)+' من '+n+'</span></div>';
   if(!mt)return h.replace(/<\/section>$/,pf+'</section>');
-  return '<section class="'+mt[1]+'"><div class="sc">'+h.slice(mt[0].length).replace(/<\/section>$/,'')+'</div>'+pf+'</section>';}).join('');
+  return mt[0]+'<div class="sc">'+h.slice(mt[0].length).replace(/<\/section>$/,'')+'</div>'+pf+'</section>';}).join('');
 }
 function arDigits(root){
  const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let n;const map='٠١٢٣٤٥٦٧٨٩';
@@ -698,6 +735,8 @@ function pagesDOM(m){const d=document.createElement('div');d.innerHTML=pagesHtml
 function drawPages(){
  const el=$('#pages');if(!el)return;
  const d=pagesDOM(M());el.innerHTML=d.innerHTML;fillPages();fitPages();
+ const ov=[...el.querySelectorAll('.sheet.ovf')].map(s=>{const r=REPORTS.find(x=>x[0]===s.dataset.rid);return r?r[1]:'';});
+ const w=$('#ovfw');if(w){w.hidden=!ov.length;w.innerHTML=ov.length?'⚠️ المحتوى أطول من مساحة الورقة في: <b>'+esc(ov.join('، '))+'</b> – جرّب تغيير اتجاه الورقة إلى أفقي/رأسي.':'';}
 }
 /* ضبط كل صفحة تلقائياً: تكبير/تصغير المحتوى ثم توسيع الصفوف ثم توزيع المسافات حتى تمتلئ الصفحة دون تجاوز */
 function fillPages(){
@@ -707,15 +746,17 @@ function fillPages(){
   const sc=sh.querySelector('.sc');if(!sc)return;
   const minH=mmpx(sh.classList.contains('land')?208:296)+1;
   const set=(k,rp,g)=>{sh.style.setProperty('--k',k);sh.style.setProperty('--rp',rp+'px');sh.style.setProperty('--gap',g+'px');};
-  const fits=()=>sh.offsetHeight<=minH+1;
+  const fits=()=>sh.offsetHeight<=minH+1&&sh.scrollWidth<=sh.clientWidth+1;
   sh.classList.add('meas');
   const search=(lo,hi,fn,it)=>{for(let i=0;i<it;i++){const mid=(lo+hi)/2;if(fn(mid))lo=mid;else hi=mid;}return lo;};
   set(1,0,0);
   let k=1;
-  if(!fits()){k=search(.8,1,x=>{set(x,0,0);return fits();},9);set(k,0,0);}
+  if(!fits()){k=search(.55,1,x=>{set(x,0,0);return fits();},10);set(k,0,0);}
   else{k=search(1,1.16,x=>{set(x,0,0);return fits();},9);set(k,0,0);}
-  const rp=search(0,7,x=>{set(k,x,0);return fits();},8);set(k,rp,0);
-  const g=search(0,60,x=>{set(k,rp,x);return fits();},8);set(k,rp,g);
+  const over=!fits();
+  const rp=over?0:search(0,7,x=>{set(k,x,0);return fits();},8);set(k,rp,0);
+  const g=over?0:search(0,60,x=>{set(k,rp,x);return fits();},8);set(k,rp,g);
+  sh.classList.toggle('ovf',over);
   sh.classList.remove('meas');
  });
 }
@@ -770,19 +811,41 @@ function ytdOf(m,e){ // أجازات السنة حتى هذا الشهر لعا�
  monthKeys().filter(k=>yearOf(k)===y&&k<=m.key).forEach(k=>{const x=(S.months[k].emps||[]).find(z=>(z.no||z.name)===(e.no||e.name));if(x){r.a+=num(x.leave);r.c+=num(x.leaveCas);r.s+=num(x.leaveSick);}});
  return r;
 }
-function quotaOf(e){const q=S.settings.quota&&S.settings.quota[e.no];return q!=null?num(q):num(S.settings.leaveDays);}
+function quotaOf(e){
+ if(!e)return num(S.settings.leaveDays)||21;
+ if(e.annualQuota!==undefined&&e.annualQuota!=='')return num(e.annualQuota);
+ const id=e.no||e.name,q=S.settings.quota&&S.settings.quota[id];
+ if(q!=null&&q!=='')return num(q);
+ for(const k of monthKeys().reverse()){
+  const x=(S.months[k].emps||[]).find(z=>(z.no||z.name)===id);
+  if(x&&x.annualQuota!==undefined&&x.annualQuota!=='')return num(x.annualQuota);
+ }
+ return num(S.settings.leaveDays)||21;
+}
+function sickQuotaOf(){return num(S.settings.sickDays)||90;}
+function setEmpQuota(id,val){
+ if(!id)return;
+ const q=S.settings.quota=S.settings.quota||{};
+ if(val===''||val==null)delete q[id];else q[id]=num(val);
+ Object.values(S.months||{}).forEach(mo=>(mo.emps||[]).forEach(e=>{if((e.no||e.name)===id){if(val===''||val==null)delete e.annualQuota;else e.annualQuota=num(val);}}));
+ S.settings.updatedAt=now();
+}
 function leaveRem(e,u){const ded=u.a+(S.settings.casualCounts!==false?u.c:0);return quotaOf(e)-ded;}
 function vEmpLeaves(m){
  const arr=m.emps;if(!arr.length)return '<div class="card"><p class="mut">لا يوجد عاملون في هذا الشهر. أضفهم من «بيانات العاملين».</p></div>';
- const rows=arr.map((e,i)=>'<tr><td>'+(i+1)+'</td><td class="rl nm"><b>'+esc(e.name||'—')+'</b><small>'+esc(e.job||'')+'</small></td>'+LEAVE_TYPES.map(t=>'<td class="lc lt-'+t.cls+'">'+inp('emps.'+i+'.'+t.k,{t:'number',ph:'0'})+'</td>').join('')+'<td><output class="tot" data-lt="'+i+'">'+fmtInt(leaveTotal(e))+'</output></td><td><span class="pill2" data-ly="'+i+'"></span></td></tr>').join('');
+ const rows=arr.map((e,i)=>'<tr><td>'+(i+1)+'</td><td class="rl nm"><b>'+esc(e.name||'—')+'</b><small>'+esc(e.job||'')+' · اعتيادي مستحق: <b>'+fmtInt(quotaOf(e))+'</b> يوم</small></td>'+LEAVE_TYPES.map(t=>'<td class="lc lt-'+t.cls+'">'+inp('emps.'+i+'.'+t.k,{t:'number',ph:'0'})+'</td>').join('')+'<td><output class="tot" data-lt="'+i+'">'+fmtInt(leaveTotal(e))+'</output></td><td><span class="pill2" data-ly="'+i+'"></span></td><td><span class="pill2" data-ls="'+i+'"></span></td></tr>').join('');
  return '<div class="card"><h3>🏖️ أجازات '+periodLabel(m.key)+' <span class="mut" style="font-weight:600;font-size:12.5px">أيام كل نوع خلال الشهر</span></h3>'
- +'<div class="tw"><table class="et lvin" style="min-width:640px"><thead><tr><th>م</th><th class="rl">العامل</th>'+LEAVE_TYPES.map(t=>'<th class="lt-'+t.cls+'">'+t.label+'</th>').join('')+'<th>الإجمالي</th><th>المتبقي من الرصيد السنوي</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
- +'<p class="mut" style="margin:10px 0 0">اعتيادي + عارضة + مرضي يظهر إجماليها في نموذج 7. العارضة حدها '+fmtInt(S.settings.casualDays)+' أيام سنوياً (يومان كحد أقصى في المرة) وتُخصم من الرصيد السنوي؛ المرضي لا يخصم من الرصيد.</p></div>';
+ +'<div class="tw"><table class="et lvin" style="min-width:720px"><thead><tr><th>م</th><th class="rl">العامل</th>'+LEAVE_TYPES.map(t=>'<th class="lt-'+t.cls+'">'+t.label+'</th>').join('')+'<th>الإجمالي</th><th>متبقي اعتيادي</th><th>متبقي مرضي (من 3 أشهر)</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+ +'<p class="mut" style="margin:10px 0 0">الرصيد الاعتيادي السنوي يُحدَّد لكل موظف من تبويب «🪪 بيانات العاملين» حسب مدة الخدمة والسن. العارضة ثابتة ('+fmtInt(S.settings.casualDays||7)+' أيام سنوياً) وتُخصم من الرصيد السنوي؛ المرضي افتراضياً 3 أشهر ('+fmtInt(sickQuotaOf())+' يوماً) لكل موظف ولا يخصم من الرصيد الاعتيادي.</p></div>';
 }
 function refreshLeaves(){
  const m=M();if(!m||S.ui.tab!=='emp')return;
- m.emps.forEach((e,i)=>{const o=document.querySelector('[data-lt="'+i+'"]');if(o)o.textContent=fmtInt(leaveTotal(e));
-  const y=document.querySelector('[data-ly="'+i+'"]');if(y){const r=leaveRem(e,ytdOf(m,e));y.textContent=fmtInt(r);y.className='pill2 '+(r<0?'red':r<=Math.max(3,quotaOf(e)*.15)?'amb':'grn');}});
+ m.emps.forEach((e,i)=>{
+  const o=document.querySelector('[data-lt="'+i+'"]');if(o)o.textContent=fmtInt(leaveTotal(e));
+  const u=ytdOf(m,e);
+  const y=document.querySelector('[data-ly="'+i+'"]');if(y){const r=leaveRem(e,u);y.textContent=fmtInt(r);y.className='pill2 '+(r<0?'red':r<=Math.max(3,quotaOf(e)*.15)?'amb':'grn');}
+  const s=document.querySelector('[data-ls="'+i+'"]');if(s){const sr=sickQuotaOf()-u.s;s.textContent=fmtInt(sr)+' يوم';s.className='pill2 '+(sr<0?'red':sr<=15?'amb':'grn');}
+ });
 }
 function vEmpCards(m){
  const arr=m.emps;
@@ -791,8 +854,11 @@ function vEmpCards(m){
   +fl('المؤهل الدراسي','emps.'+i+'.qual','text')+fl('المجموعة الوظيفية','emps.'+i+'.grp','text')+fl('الدرجة','emps.'+i+'.grade','text')
   +fl('درجة القيد بالنقابة','emps.'+i+'.syn','text')+fl('رقم القيد بالنقابة','emps.'+i+'.synNo','text')
   +fl('البدل الوظيفي','emps.'+i+'.jobAllow','number')+fl('بدل الإدارة','emps.'+i+'.mgmtAllow','number')
+  +'<label class="fld"><span>رصيد الأجازات الاعتيادية السنوي (يوم)</span><input type="number" min="0" step="1" data-p="emps.'+i+'.annualQuota" data-empq="'+esc(e.no||e.name)+'" value="'+esc(quotaOf(e))+'" placeholder="حسب الخدمة والسن (21 / 30 / 45)"></label>'
+  +'<label class="fld"><span>الأجازات العارضة والمرضية السنوية</span><input type="text" value="عارضة: '+fmtInt(S.settings.casualDays||7)+' أيام (ثابت) · مرضي: 3 أشهر ('+fmtInt(sickQuotaOf())+' يوم)" disabled class="calc"></label>'
   +fl('المسمى في كشف الحجز (اختياري)','emps.'+i+'.r3job','text','w2')+'<label class="fld chk"><input type="checkbox" data-p="emps.'+i+'.r3off"'+(e.r3off?' checked':'')+'><span>استبعاد من كشف مكافأة الحجز</span></label></div></div>';
- return '<div class="card"><h3>🪪 بيانات العاملين – نموذج 7 وكشف مكافأة الحجز <button class="btn sm pri" data-act="addemp">＋ إضافة عامل</button><button class="btn sm" data-act="raise">📈 تطبيق الزيادة السنوية</button></h3>'
+ return '<div class="card"><h3>🪪 بيانات وإعدادات العاملين – الأجازات المستحقة ونموذج 7 وكشف الحجز <button class="btn sm pri" data-act="addemp">＋ إضافة عامل</button><button class="btn sm" data-act="raise">📈 تطبيق الزيادة السنوية</button></h3>'
+ +'<p class="mut" style="margin-top:-6px">حدّد لكل موظف رصيد أجازاته الاعتيادية السنوية المستحقة حسب مدة الخدمة والسن (مثلاً 21 أو 30 أو 45 يوماً). الأجازات العارضة ثابتة ('+fmtInt(S.settings.casualDays||7)+' أيام)، والمرضية افتراضية 3 أشهر ('+fmtInt(sickQuotaOf())+' يوماً) لكل موظف.</p>'
  +(arr.length?'<div class="ecards">'+arr.map(card).join('')+'</div>':'<p class="mut">لا يوجد عاملون.</p>')+'</div>';
 }
 /* ===== إجماليات لكل بند ===== */
@@ -837,10 +903,26 @@ function vTotals(m){
 /* ===== أجازات العاملين ورصيدها السنوي ===== */
 function leaveTable(y){
  const keys=monthKeys().filter(k=>yearOf(k)===y),byNo={};
- keys.forEach(k=>(S.months[k].emps||[]).forEach(e=>{const id=e.no||e.name;const r=byNo[id]||(byNo[id]={no:e.no||'',name:e.name,m:{}});r.name=e.name||r.name;r.m[k]={a:num(e.leave),c:num(e.leaveCas),s:num(e.leaveSick)};}));
- const rows=Object.values(byNo).map(r=>{const u={a:0,c:0,s:0};Object.values(r.m).forEach(x=>{u.a+=x.a;u.c+=x.c;u.s+=x.s;});Object.assign(r,{a:u.a,c:u.c,s:u.s});
-  const q=S.settings.quota&&S.settings.quota[r.no];r.quota=q!=null?num(q):num(S.settings.leaveDays);r.custom=q!=null;
-  r.ded=r.a+(S.settings.casualCounts!==false?r.c:0);r.rem=r.quota-r.ded;r.casRem=num(S.settings.casualDays)-r.c;r.used=r.a+r.c+r.s;return r;});
+ keys.forEach(k=>(S.months[k].emps||[]).forEach(e=>{
+  const id=e.no||e.name;
+  const r=byNo[id]||(byNo[id]={id,no:e.no||'',name:e.name,emp:e,m:{}});
+  r.name=e.name||r.name;r.emp=e;
+  r.m[k]={a:num(e.leave),c:num(e.leaveCas),s:num(e.leaveSick)};
+ }));
+ const sq=sickQuotaOf();
+ const rows=Object.values(byNo).map(r=>{
+  const u={a:0,c:0,s:0};Object.values(r.m).forEach(x=>{u.a+=x.a;u.c+=x.c;u.s+=x.s;});
+  Object.assign(r,{a:u.a,c:u.c,s:u.s});
+  r.quota=quotaOf(r.emp);
+  r.custom=(r.emp&&r.emp.annualQuota!==undefined&&r.emp.annualQuota!=='')||(S.settings.quota&&S.settings.quota[r.id]!=null);
+  r.ded=r.a+(S.settings.casualCounts!==false?r.c:0);
+  r.rem=r.quota-r.ded;
+  r.casRem=num(S.settings.casualDays)-r.c;
+  r.sickQuota=sq;
+  r.sickRem=sq-r.s;
+  r.used=r.a+r.c+r.s;
+  return r;
+ });
  return {keys,rows};
 }
 function vLeaves(m){
@@ -850,18 +932,18 @@ function vLeaves(m){
  const T=rows.reduce((o,r)=>{o.a+=r.a;o.c+=r.c;o.s+=r.s;o.q+=r.quota;o.ded+=r.ded;return o;},{a:0,c:0,s:0,q:0,ded:0});
  const cls=r=>r.rem<0?'red':r.rem<=Math.max(3,r.quota*.15)?'amb':'grn';
  const chip=(l,v,c)=>'<div class="lchip lt-'+c+'"><span>'+l+'</span><b>'+fmtInt(v)+'</b><small>يوم</small></div>';
- const over=rows.filter(r=>r.rem<0||r.casRem<0);
+ const over=rows.filter(r=>r.rem<0||r.casRem<0||r.sickRem<0);
  const partial=keys.length<12?'<div class="warn info">ℹ️ المسجل '+keys.length+' شهر من 12 في سنة '+y+'؛ المتبقي محسوب على الشهور المسجلة فقط'+(y==='2025'?' (بداية التسجيل نوفمبر 2025)':'')+'.</div>':'';
- const body=rows.map((r,i)=>'<tr><td class="rl nm"><b>'+esc(r.name)+'</b></td><td><input type="number" min="0" data-q="'+esc(r.no)+'" value="'+r.quota+'" class="qin'+(r.custom?' cu':'')+'" title="الرصيد السنوي (قابل للتعديل)"></td>'
+ const body=rows.map((r,i)=>'<tr><td class="rl nm"><b>'+esc(r.name)+'</b></td><td><input type="number" min="0" data-q="'+esc(r.id)+'" value="'+r.quota+'" class="qin'+(r.custom?' cu':'')+'" title="الرصيد الاعتيادي السنوي المستحق (قابل للتعديل)"></td>'
   +'<td class="lt-a">'+(r.a?'<b>'+fmtInt(r.a)+'</b>':'·')+'</td><td class="lt-c">'+(r.c?'<b class="'+(r.casRem<0?'red':'')+'">'+fmtInt(r.c)+'</b>':'·')+'</td><td>'+fmtInt(r.ded)+'</td>'
-  +'<td><span class="pill2 '+cls(r)+'">'+fmtInt(r.rem)+'</span></td><td class="'+(r.casRem<0?'redc':'')+'">'+fmtInt(r.casRem)+'</td><td class="lt-s">'+(r.s?'<b>'+fmtInt(r.s)+'</b>':'·')+'</td></tr>').join('');
- const foot='<tr class="sumr"><td class="rl">الإجمالي</td><td>'+fmtInt(T.q)+'</td><td>'+fmtInt(T.a)+'</td><td>'+fmtInt(T.c)+'</td><td>'+fmtInt(T.ded)+'</td><td>'+fmtInt(T.q-T.ded)+'</td><td></td><td>'+fmtInt(T.s)+'</td></tr>';
+  +'<td><span class="pill2 '+cls(r)+'">'+fmtInt(r.rem)+'</span></td><td class="'+(r.casRem<0?'redc':'')+'">'+fmtInt(r.casRem)+'</td><td class="lt-s">'+(r.s?'<b>'+fmtInt(r.s)+'</b>':'·')+'</td><td class="'+(r.sickRem<0?'redc':'')+'">'+fmtInt(r.sickRem)+' <small class="mut">/ '+fmtInt(r.sickQuota)+'</small></td></tr>').join('');
+ const foot='<tr class="sumr"><td class="rl">الإجمالي</td><td>'+fmtInt(T.q)+'</td><td>'+fmtInt(T.a)+'</td><td>'+fmtInt(T.c)+'</td><td>'+fmtInt(T.ded)+'</td><td>'+fmtInt(T.q-T.ded)+'</td><td></td><td>'+fmtInt(T.s)+'</td><td></td></tr>';
  const mrows=keys.map(k=>{const es=S.months[k].emps||[],a=es.reduce((x,e)=>x+num(e.leave),0),c=es.reduce((x,e)=>x+num(e.leaveCas),0),sk=es.reduce((x,e)=>x+num(e.leaveSick),0);return '<tr><td class="rl">'+periodLabel(k)+'</td><td class="lt-a">'+fmtInt(a)+'</td><td class="lt-c">'+fmtInt(c)+'</td><td class="lt-s">'+fmtInt(sk)+'</td><td><b>'+fmtInt(a+c+sk)+'</b></td></tr>';}).join('');
  return '<div class="card"><h3>🏖️ أجازات العاملين – سنة '+y+' <span class="btns" style="align-items:center"><span class="mut" style="font-size:12.5px">السنة الميلادية</span>'+sel+'</span></h3>'+partial
  +'<div class="lchips">'+chip('اعتيادي',T.a,'a')+chip('عارضة',T.c,'c')+chip('مرضي',T.s,'s')+chip('المتبقي من الرصيد',T.q-T.ded,'r')+'</div>'
- +(over.length?'<div class="warn bad">⛔ تجاوز في الرصيد: '+over.map(r=>esc(r.name)+(r.rem<0?' (الرصيد '+fmtInt(r.rem)+')':'')+(r.casRem<0?' (العارضة تتجاوز '+fmtInt(S.settings.casualDays)+')':'')).join('، ')+'</div>':'')
- +'<div class="tw"><table class="et lv" style="min-width:760px"><thead><tr><th class="rl">العامل</th><th>الرصيد السنوي</th><th class="lt-a">اعتيادي</th><th class="lt-c">عارضة</th><th>المخصوم من الرصيد</th><th>المتبقي</th><th>عارضة متبقية</th><th class="lt-s">مرضي</th></tr></thead><tbody>'+body+foot+'</tbody></table></div>'
- +'<p class="mut" style="margin:8px 0 0">المتبقي = الرصيد السنوي − (اعتيادي'+(S.settings.casualCounts!==false?' + عارضة':'')+'). المرضي للعلم ولا يخصم من الرصيد. الرصيد الافتراضي '+fmtInt(S.settings.leaveDays)+' يوماً ويمكن تعديله لكل عامل (الخانة الملونة = رصيد مخصص). لا يشمل الترحيل من سنوات سابقة.</p></div>'
+ +(over.length?'<div class="warn bad">⛔ تجاوز في الرصيد: '+over.map(r=>esc(r.name)+(r.rem<0?' (الاعتيادي '+fmtInt(r.rem)+')':'')+(r.casRem<0?' (العارضة تتجاوز '+fmtInt(S.settings.casualDays)+')':'')+(r.sickRem<0?' (المرضي يتجاوز '+fmtInt(r.sickQuota)+')':'')).join('، ')+'</div>':'')
+ +'<div class="tw"><table class="et lv" style="min-width:820px"><thead><tr><th class="rl">العامل</th><th>الاعتيادي المستحق</th><th class="lt-a">اعتيادي</th><th class="lt-c">عارضة (من '+fmtInt(S.settings.casualDays||7)+')</th><th>المخصوم من الرصيد</th><th>المتبقي اعتيادي</th><th>عارضة متبقية</th><th class="lt-s">مرضي</th><th>مرضي متبقي (من 3 أشهر)</th></tr></thead><tbody>'+body+foot+'</tbody></table></div>'
+ +'<p class="mut" style="margin:8px 0 0">المتبقي الاعتيادي = الرصيد السنوي المستحق لكل موظف − (اعتيادي'+(S.settings.casualCounts!==false?' + عارضة':'')+'). العارضة ثابتة ('+fmtInt(S.settings.casualDays||7)+' أيام سنوياً). المرضي افتراضياً 3 أشهر ('+fmtInt(sickQuotaOf())+' يوماً) لكل موظف ولا يخصم من الرصيد الاعتيادي.</p></div>'
  +'<div class="card"><h3>توزيع الأجازات على الشهور</h3><div class="tw"><table class="et" style="min-width:0"><thead><tr><th class="rl">الشهر</th><th class="lt-a">اعتيادي</th><th class="lt-c">عارضة</th><th class="lt-s">مرضي</th><th>الإجمالي</th></tr></thead><tbody>'+mrows+'</tbody></table></div></div>';
 }
 /* ===== البدلات ===== */
@@ -909,7 +991,11 @@ function vLog(m){
 }
 function vPrn(m){
  const s=S.settings;
- return '<div class="card noprint"><h3>التقارير المطلوبة لشهر '+periodLabel(m.key)+'</h3><div class="sel">'+REPORTS.map(([id,t])=>'<label class="chk"><input type="checkbox" data-sel="'+id+'"'+(S.ui.sel.includes(id)?' checked':'')+'> '+t+'</label>').join('')+'</div>'
+ const rs=selReports(),last=rs.length?rs[rs.length-1]:null,lastLand=last&&orientOf(last[0])==='land';
+ const ori=id=>{const l=orientOf(id)==='land';return '<button type="button" class="ori'+(l?' on':'')+'" data-act="orient:'+id+'" title="تغيير اتجاه الورقة">'+(l?'↔ أفقي':'↕ رأسي')+'</button>';};
+ return '<div class="card noprint"><h3>التقارير المطلوبة لشهر '+periodLabel(m.key)+'</h3><div class="sel">'+REPORTS.map(([id,t])=>'<span class="ri"><label class="chk"><input type="checkbox" data-sel="'+id+'"'+(S.ui.sel.includes(id)?' checked':'')+'> '+t+'</label>'+ori(id)+'</span>').join('')+'</div>'
+  +(last?'<div class="opts"><button class="btn sm'+(lastLand?' pri':'')+'" data-act="lastland">'+(lastLand?'✓ الورقة الأخيرة أفقية – إعادتها رأسية':'↔ طباعة الورقة الأخيرة أفقياً')+'</button><span class="mut" style="font-size:12.5px">الورقة الأخيرة حالياً: <b>'+esc(last[1])+'</b> ('+(lastLand?'أفقي':'رأسي')+')</span></div>':'')
+  +'<div class="warn bad" id="ovfw" hidden></div>'
   +'<div class="opts"><label class="chk"><input type="checkbox" data-s="hideNone" data-rr'+(s.hideNone?' checked':'')+'> إخفاء بنود «لا يوجد» من بيان الأحكام</label><label class="chk"><input type="checkbox" data-s="hideZero" data-rr'+(s.hideZero?' checked':'')+'> إخفاء البنود الصفرية (المتحصلات والنماذج)</label><label class="chk">الأرقام: <select data-s="digits" data-rr style="width:auto"><option value="latin"'+(s.digits==='latin'?' selected':'')+'>1 2 3</option><option value="ar"'+(s.digits==='ar'?' selected':'')+'>١ ٢ ٣</option></select></label></div>'
   +'<div class="btns"><button class="btn pri" data-act="print">🖨️ طباعة / حفظ PDF</button><button class="btn" data-act="word">📄 تصدير Word</button><button class="btn" data-act="xlsx">📊 تصدير Excel (كل الشهور)</button><button class="btn" data-act="json">💾 نسخة احتياطية JSON</button></div></div><div class="pages" id="pages"></div>';
 }
@@ -944,7 +1030,7 @@ function renderView(){
 }
 function toast(t){const d=document.createElement('div');d.className='toast noprint';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2800);}
 function openModal(h){$('#modal').innerHTML='<div class="modal noprint" data-act="closebg"><div class="mbox">'+h+'</div></div>';}
-function closeModal(){$('#modal').innerHTML='';}
+function closeModal(){$('#modal').innerHTML='';render();}
 function updateStatus(){
  const el=$('#status');if(!el)return;let t='💾 محفوظ على هذا الجهاز',c='chip ok';
  if(fileHandle)t+=' · 📁 '+esc(fileHandle.name);
@@ -959,10 +1045,11 @@ function updateStatus(){
 /* ============ الأحداث ============ */
 document.addEventListener('input',e=>{
  const t=e.target;if(!t.dataset)return;
- if(t.dataset.sel){const id=t.dataset.sel;S.ui.sel=t.checked?[...new Set([...S.ui.sel,id])]:S.ui.sel.filter(x=>x!==id);save();drawPages();return;}
- if(t.dataset.s){setP(S.settings,t.dataset.s,t.type==='checkbox'?t.checked:t.value);S.settings.updatedAt=now();persist();if(t.dataset.rr)drawPages();return;}
+ if(t.dataset.sel){const id=t.dataset.sel;S.ui.sel=t.checked?[...new Set([...S.ui.sel,id])]:S.ui.sel.filter(x=>x!==id);save();if(S.ui.tab==='prn')renderView();else drawPages();return;}
+ if(t.dataset.s){setP(S.settings,t.dataset.s,t.type==='checkbox'?t.checked:t.value);S.settings.updatedAt=now();persist();renderHdr();if(S.ui.tab==='prn'||t.dataset.rr)drawPages();return;}
  const p=t.dataset.p;if(!p)return;const m=M();if(!m)return;
  setP(m,p,t.type==='checkbox'?t.checked:t.value);
+ if(t.dataset.empq!==undefined)setEmpQuota(t.dataset.empq,t.value);
  if(t.dataset.vo!==undefined){const a=t.parentElement.querySelector('input');if(a)a.hidden=t.value!=='amount';}
  m.updatedAt=now();refreshCalc();refreshLeaves();persist();
 });
@@ -992,7 +1079,14 @@ const ACT={
  delrow(k,i){M().loy[k].splice(+i,1);touch();renderView();},
  addemp(){M().emps.push({});touch();renderView();},
  delemp(i){if(!confirm('حذف هذا العامل من بيانات الشهر؟'))return;M().emps.splice(+i,1);touch();renderView();},
- print(){window.print();},
+ print(){
+  if(!M())return;
+  if(S.ui.tab!=='prn'){S.ui.tab='prn';save();renderSide();renderHdr();renderView();}
+  const go=()=>{drawPages();requestAnimationFrame(()=>requestAnimationFrame(()=>window.print()));};
+  (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(go,go);
+ },
+ orient(id){S.ui.orient=S.ui.orient||{};S.ui.orient[id]=orientOf(id)==='land'?'port':'land';save();renderView();},
+ lastland(){const rs=selReports();if(!rs.length)return toast('اختر تقريراً واحداً على الأقل');ACT.orient(rs[rs.length-1][0]);},
  copycfg(){const l=cfgLink();if(!l)return toast('اربط Google Sheets أولاً (رابط تطبيق الويب وكلمة السر)');const done=()=>toast('تم نسخ رابط الفتح السريع');if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(l).then(done,()=>prompt('انسخ الرابط:',l));else prompt('انسخ الرابط:',l);},
  synctest(){syncNow(true);},
  raise(){const m=M();const p=num(S.settings.allowRaisePct);if(!p)return toast('حدد نسبة الزيادة أولاً من الإعدادات');if(!confirm('رفع البدل الوظيفي وبدل الإدارة لعاملي '+periodLabel(m.key)+' بنسبة '+p+'%؟'))return;const n=applyRaise(m.emps);touch();renderView();toast('تم تحديث '+n+' بدلاً');},
@@ -1028,7 +1122,7 @@ document.addEventListener('change',e=>{
  const t=e.target;
  if(t.id==='msel'){S.ui.cur=t.value;save();render();return;}
  if(t.dataset&&t.dataset.ui){S.ui[t.dataset.ui]=t.value;save();renderView();return;}
- if(t.dataset&&t.dataset.q){const q=S.settings.quota=S.settings.quota||{};if(t.value==='')delete q[t.dataset.q];else q[t.dataset.q]=num(t.value);S.settings.updatedAt=now();persist();renderView();return;}
+ if(t.dataset&&t.dataset.q){setEmpQuota(t.dataset.q,t.value);persist();renderView();return;}
  if(t.id==='logoFile'&&t.files[0]){
   const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{const k=Math.min(1,200/img.height),c=document.createElement('canvas');c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext('2d').drawImage(img,0,0,c.width,c.height);S.settings.logo=c.toDataURL('image/png');S.settings.updatedAt=now();persist();openSettings();};img.src=r.result;};r.readAsDataURL(t.files[0]);
  }
@@ -1038,6 +1132,8 @@ document.addEventListener('change',e=>{
 });
 window.addEventListener('resize',fitPages);
 window.addEventListener('beforeprint',()=>{if(M()&&S.ui.tab!=='prn'){S.ui.tab='prn';renderSide();renderHdr();renderView();}});
+/* إعادة ضبط الصفحات بعد اكتمال تحميل الخط حتى لا يختلف القياس عن الطباعة */
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(S.ui.tab==='prn')drawPages();});
 
 /* البدل الوظيفي وبدل الإدارة: أساسهما شهر نوفمبر 2025، ويزيدان بنسبة مئوية أول كل سنة ميلادية */
 function applyRaise(emps){const f=1+num(S.settings.allowRaisePct)/100;if(f===1)return 0;let n=0;
@@ -1159,7 +1255,7 @@ function openSettings(){
  openModal('<h2>⚙️ الإعدادات والمزامنة</h2>'
  +'<h4>بيانات الجهة والتوقيعات</h4><div class="fg">'+sf('org','اسم الشركة')+sf('sector','القطاع')+sf('dept','الإدارة')+sf('dept2','الإدارة في رأس نموذج 2')+sf('workTitle','عنوان بيان الأعمال (بعد «بيان أعمال»)')+sf('section','القسم (في تقرير المتحصلات)')+sf('branch','الفرع (صندوق الولاء ونموذج 7)')+sf('addr1','المخاطَب الأول (لشركات المجموعة)')+sf('addr2','المخاطَب الثاني')+'</div>'
  +'<div class="fg" style="margin-top:10px">'+sf('sig1a','توقيع 1 – الصفة')+sf('sig1b','توقيع 1 – الجهة')+sf('sig1c','توقيع 1 – الاسم')+sf('sig2a','توقيع 2 – الصفة')+sf('sig2b','توقيع 2 – الجهة')+sf('sig2c','توقيع 2 – الاسم')+'</div>'
- +'<h4>الأجازات والبدلات (لوحة المتابعة)</h4><div class="fg">'+sf('leaveDays','الرصيد السنوي الافتراضي للأجازات (يوم)','number')+sf('casualDays','الحد الأقصى للإجازة العارضة سنوياً (يوم)','number')+sf('allowRaisePct','نسبة زيادة البدل الوظيفي وبدل الإدارة أول كل سنة ميلادية (%)','number')+'<label class="fld"><span>تُخصم العارضة من رصيد الإجازة السنوية</span><input type="checkbox" data-s="casualCounts"'+(S.settings.casualCounts!==false?' checked':'')+'></label></div><p class="mut">الإجازة العارضة 7 أيام سنوياً بحد أقصى يومين في المرة وتُخصم من الرصيد السنوي (قانون العمل 14 لسنة 2025). المرضي بلا رصيد سنوي ويُسجَّل للعلم فقط. رصيد كل عامل يمكن تعديله من لوحة المتابعة (21 يوماً، أو 30 بعد 10 سنوات خدمة). الزيادة تُطبَّق تلقائياً عند ترحيل شهر يناير جديد.</p>'
+ +'<h4>الأجازات والبدلات (لوحة المتابعة)</h4><div class="fg">'+sf('leaveDays','الرصيد الاعتيادي الافتراضي للموظف الجديد (يوم)','number')+sf('casualDays','رصيد الإجازة العارضة السنوي الثابت (يوم)','number')+sf('sickDays','رصيد الإجازة المرضية الافتراضي لكل موظف (يوم – 3 أشهر = 90)','number')+sf('allowRaisePct','نسبة زيادة البدل الوظيفي وبدل الإدارة أول كل سنة ميلادية (%)','number')+'<label class="fld"><span>تُخصم العارضة من رصيد الإجازة السنوية</span><input type="checkbox" data-s="casualCounts"'+(S.settings.casualCounts!==false?' checked':'')+'></label></div><p class="mut">يُحدَّد الرصيد الاعتيادي المستحق لكل موظف على حدة من تبويب «العاملون والأجازات ← بيانات العاملين» حسب مدة الخدمة والسن. العارضة ثابتة (7 أيام سنوياً)، والمرضي افتراضياً 3 أشهر (90 يوماً) لكل موظف.</p>'
 +'<h4>الشعار</h4><div class="btns" style="align-items:center">'+(s.logo?'<img src="'+s.logo+'" style="max-height:50px"> <button class="btn sm bad" data-act="clearlogo">حذف الشعار</button>':'<span class="mut">لا يوجد شعار – سيُطبع اسم الشركة نصاً.</span>')+'<input type="file" id="logoFile" accept="image/*" style="width:auto"></div>'
  +'<h4>شرح بنود المتحصلات (يظهر في جدول التوضيح)</h4><div class="fg">'+COLS.map(c=>'<label class="fld"><span>'+c[4]+'</span><input data-s="colText.'+c[0]+'" value="'+esc(s.colText[c[0]]||'')+'" placeholder="'+esc(c[5])+'"></label>').join('')+'</div>'
  +'<h4>1) ملف قاعدة بيانات مرتبط (مناسب لـ OneDrive الشخصي)</h4><p class="mut">اجعل الملف داخل مجلد OneDrive على جهازك، وسيحفظ التطبيق فيه تلقائياً مع كل تعديل ويرفعه OneDrive بنفسه. يعمل على Chrome وEdge.</p>'
@@ -1254,7 +1350,14 @@ function exportJson(){download(new Blob([JSON.stringify(exportObj(),null,1)],{ty
 function exportWord(){
  const m=M();if(!m)return;
  const d=pagesDOM(m);
- const html='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" dir="rtl"><head><meta charset="utf-8"><style>@page{size:21cm 29.7cm;margin:1cm}body{direction:rtl}'+$('#sheetcss').textContent.replace(/@page[^{]*\{[^}]*\}/g,'').replace(/@media print\{[\s\S]*$/,'')+'</style></head><body dir="rtl">'+d.innerHTML+'</body></html>';
+ /* كل مجموعة أوراق متتالية بنفس الاتجاه = قسم مستقل في Word (رأسي أو أفقي) */
+ let body='',cur=null;
+ [...d.children].forEach(sh=>{const o=sh.classList.contains('land')?'L':'P';
+  if(o!==cur){if(cur)body+='</div><br clear="all" style="mso-special-character:line-break;page-break-before:always">';body+='<div class="Sec'+o+'">';cur=o;}
+  body+=sh.outerHTML;});
+ if(cur)body+='</div>';
+ const css=$('#sheetcss').textContent.replace(/@page[^{]*\{[^}]*\}/g,'').replace(/@media print\{[\s\S]*$/,'');
+ const html='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" dir="rtl"><head><meta charset="utf-8"><style>@page SecP{size:21cm 29.7cm;mso-page-orientation:portrait;margin:1cm}@page SecL{size:29.7cm 21cm;mso-page-orientation:landscape;margin:1cm}div.SecP{page:SecP}div.SecL{page:SecL}body{direction:rtl}'+css+'.sheet,.sheet.land{width:auto;min-height:0;box-shadow:none}</style></head><body dir="rtl">'+body+'</body></html>';
  download(new Blob(['\ufeff',html],{type:'application/msword'}),'تقارير-'+m.key+'.doc');
 }
 function loadScript(u){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=u;s.onload=res;s.onerror=rej;document.head.appendChild(s);});}
