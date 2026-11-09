@@ -420,7 +420,7 @@ const DEFAULT_SETTINGS={
  addr1:'السيد المستشار / رئيس قطاع الشئون القانونية لشركات المجموعة',addr2:'السيد المستشار / رئيس قطاع الشئون القانونية',
  sig1a:'رئيس قسم',sig1b:'تنفيذ الأحكام والمديونيات بالدقهلية',sig1c:'أ/ محمود العراقي',
  sig2a:'مدير إدارة',sig2b:'الشئون القانونية بالدقهلية',sig2c:'بهاء عبد العاطي إسماعيل – المحامي بالنقض',
- digits:'latin',hideNone:false,hideZero:false,colText:{},logo:'',sheetUrl:'',sheetToken:'Mawadda2030*#',sheetLink:'https://docs.google.com/spreadsheets/d/1KT67DXv5Kt0OvrdWtIG9e8CC8yNfzxjZGSASpT6JkZ8/edit',autoSync:true,leaveDays:21,casualDays:7,casualCounts:true,quota:{},allowRaisePct:0,allowBaseKey:'2025-11',updatedAt:''
+ digits:'latin',hideNone:false,hideZero:false,colText:{},logo:'',sheetUrl:'https://script.google.com/macros/s/AKfycbxJBSfxytos91iiiNWS_ybFGezTZmM3pAbVaIwar9HjT9xVEZQD1U6-i6ZatejVDv4-Ig/exec',sheetToken:'Mawadda2030*#',sheetLink:'https://docs.google.com/spreadsheets/d/1KT67DXv5Kt0OvrdWtIG9e8CC8yNfzxjZGSASpT6JkZ8/edit',autoSync:true,leaveDays:21,casualDays:7,casualCounts:true,quota:{},allowRaisePct:0,allowBaseKey:'2025-11',updatedAt:''
 };
 let S={settings:clone(DEFAULT_SETTINGS),months:{},deleted:{},pendDel:[],pushed:{},ui:{cur:null,tab:'dash',sel:['r0','r1','r2','r3','r4','r5','r6','r7','r8']}};
 let fileHandle=null,needPerm=false,syncState='';
@@ -461,7 +461,7 @@ function seedMonth(){
 }
 function load(){
  try{const d=JSON.parse(localStorage.getItem(LSK)||'null');
-  if(d){S.settings=Object.assign(clone(DEFAULT_SETTINGS),d.settings||{});if(!S.settings.sheetToken)S.settings.sheetToken='Mawadda2030*#';S.months=d.months||{};S.deleted=d.deleted||{};S.pendDel=d.pendDel||[];S.pushed=d.pushed||{};S.ui=Object.assign(S.ui,d.ui||{});}
+  if(d){S.settings=Object.assign(clone(DEFAULT_SETTINGS),d.settings||{});if(!S.settings.sheetToken)S.settings.sheetToken='Mawadda2030*#';if(!S.settings.sheetUrl)S.settings.sheetUrl='https://script.google.com/macros/s/AKfycbxJBSfxytos91iiiNWS_ybFGezTZmM3pAbVaIwar9HjT9xVEZQD1U6-i6ZatejVDv4-Ig/exec';S.months=d.months||{};S.deleted=d.deleted||{};S.pendDel=d.pendDel||[];S.pushed=d.pushed||{};S.ui=Object.assign(S.ui,d.ui||{});}
  }catch(e){}
  if(!Object.keys(S.months).length&&!Object.keys(S.deleted).length){const m=seedMonth();S.months[m.key]=m;S.ui.cur=m.key;}
  cleanMonthKeys();
