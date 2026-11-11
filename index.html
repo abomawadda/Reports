@@ -3,7 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#5b2a86">
 <title>منظومة التقارير الشهرية – الشئون القانونية</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -439,7 +442,7 @@ const DEFAULT_SETTINGS={
  addr1:'السيد المستشار / رئيس قطاع الشئون القانونية لشركات المجموعة',addr2:'السيد المستشار / رئيس قطاع الشئون القانونية',
  sig1a:'رئيس قسم',sig1b:'تنفيذ الأحكام والمديونيات بالدقهلية',sig1c:'أ/ محمود العراقي',
  sig2a:'مدير إدارة',sig2b:'الشئون القانونية بالدقهلية',sig2c:'بهاء عبد العاطي إسماعيل – المحامي بالنقض',
- digits:'latin',hideNone:false,hideZero:false,colText:{},logo:'',sheetUrl:'https://script.google.com/macros/s/AKfycbxJBSfxytos91iiiNWS_ybFGezTZmM3pAbVaIwar9HjT9xVEZQD1U6-i6ZatejVDv4-Ig/exec',sheetToken:'Mawadda2030*#',sheetLink:'https://docs.google.com/spreadsheets/d/1KT67DXv5Kt0OvrdWtIG9e8CC8yNfzxjZGSASpT6JkZ8/edit',autoSync:true,leaveDays:21,casualDays:7,sickDays:90,casualCounts:true,quota:{},allowRaisePct:0,allowBaseKey:'2025-11',updatedAt:''
+  digits:'latin',hideNone:false,hideZero:false,colText:{},logo:'',sheetUrl:'',sheetToken:'',sheetLink:'',autoSync:false,leaveDays:21,casualDays:7,sickDays:90,casualCounts:true,quota:{},allowRaisePct:0,allowBaseKey:'2025-11',updatedAt:''
 };
 let S={settings:clone(DEFAULT_SETTINGS),months:{},deleted:{},pendDel:[],pushed:{},ui:{cur:null,tab:'dash',sel:['r0','r1','r2','r3','r4','r5','r6','r7','r8']}};
 let fileHandle=null,needPerm=false,syncState='';
@@ -480,7 +483,7 @@ function seedMonth(){
 }
 function load(){
  try{const d=JSON.parse(localStorage.getItem(LSK)||'null');
-  if(d){S.settings=Object.assign(clone(DEFAULT_SETTINGS),d.settings||{});if(!S.settings.sheetToken)S.settings.sheetToken='Mawadda2030*#';if(!S.settings.sheetUrl)S.settings.sheetUrl='https://script.google.com/macros/s/AKfycbxJBSfxytos91iiiNWS_ybFGezTZmM3pAbVaIwar9HjT9xVEZQD1U6-i6ZatejVDv4-Ig/exec';S.months=d.months||{};S.deleted=d.deleted||{};S.pendDel=d.pendDel||[];S.pushed=d.pushed||{};S.ui=Object.assign(S.ui,d.ui||{});}
+  if(d){S.settings=Object.assign(clone(DEFAULT_SETTINGS),d.settings||{});S.months=d.months||{};S.deleted=d.deleted||{};S.pendDel=d.pendDel||[];S.pushed=d.pushed||{};S.ui=Object.assign(S.ui,d.ui||{});}
  }catch(e){}
  if(!Object.keys(S.months).length&&!Object.keys(S.deleted).length){const m=seedMonth();S.months[m.key]=m;S.ui.cur=m.key;}
  cleanMonthKeys();
@@ -795,9 +798,49 @@ function vF1(m){
  return F1.map(blockForm).join('')+'<div class="card"><h3>ملحوظة تُطبع أسفل القضاء الجنائي (اتركها فارغة لإخفائها)</h3><textarea data-p="f1.note" rows="3">'+esc(m.f1.note||'')+'</textarea></div><p class="mut">«المبلغ المحصل» يُسحب تلقائياً من إجمالي المتحصلات، والحقول الملونة بالبنفسجي محسوبة تلقائياً ويمكن تجاوزها يدوياً.</p>';
 }
 function vF2(m){return F2.map(blockForm).join('')+'<p class="mut">بيانات الجنح والجنايات في نموذج 2 تُؤخذ تلقائياً من «القضاء الجنائي» في نموذج 1.</p>';}
+const normAr=s=>String(s==null?'':s).toLowerCase().replace(/[٠-٩]/g,d=>'0123456789'['٠١٢٣٤٥٦٧٨٩'.indexOf(d)]).replace(/[ً-ْـ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/[\s\-_/\\,،.]+/g,' ');
+function filterTableRows(inp){
+ const q=normAr(inp.value.trim());
+ const card=inp.closest('.card');
+ const tb=card?card.querySelector('table tbody'):null;
+ if(!tb)return;
+ const rows=tb.querySelectorAll('tr');
+ let match=0;
+ rows.forEach(tr=>{
+  let txt='';
+  tr.querySelectorAll('td').forEach(td=>{
+   const i=td.querySelector('input,select,textarea');
+   txt+=' '+(i?i.value:td.textContent);
+  });
+  const show=!q||normAr(txt).indexOf(q)>=0;
+  tr.style.display=show?'':'none';
+  if(show)match++;
+ });
+ const cnt=card.querySelector('.filter-count');
+ if(cnt)cnt.textContent=q?'(مطابق: '+match+' من '+rows.length+')':'';
+}
+function filterCardList(inp,sel){
+ const q=normAr(inp.value.trim());
+ const container=$('#view');
+ if(!container)return;
+ const cards=container.querySelectorAll(sel);
+ let match=0;
+ cards.forEach(cd=>{
+  let txt='';
+  cd.querySelectorAll('input,select,textarea,b,small,span').forEach(el=>{
+   txt+=' '+(el.value||el.textContent||'');
+  });
+  const show=!q||normAr(txt).indexOf(q)>=0;
+  cd.style.display=show?'':'none';
+  if(show)match++;
+ });
+ const cnt=inp.closest('.card').querySelector('.filter-count');
+ if(cnt)cnt.textContent=q?'(مطابق: '+match+' من '+cards.length+')':'';
+}
 function rowEd(k){
  const m=M(),d=LOY[k],arr=m.loy[k]||[];
- return '<div class="card"><h3>'+d.t+' <button class="btn sm" data-act="addrow:'+k+'">＋ إضافة</button></h3>'+(arr.length?'<div class="tw"><table class="et wide"><thead><tr><th>م</th>'+d.cols.map(c=>'<th>'+c[1]+'</th>').join('')+'<th></th></tr></thead><tbody>'+arr.map((r,i)=>'<tr><td>'+(i+1)+'</td>'+d.cols.map(c=>'<td>'+inp('loy.'+k+'.'+i+'.'+c[0],{t:c[2]==='n'?'number':c[2]==='date'?'date':'text'})+'</td>').join('')+'<td><button class="btn sm bad" data-act="delrow:'+k+':'+i+'">✕</button></td></tr>').join('')+'</tbody></table></div>':'<p class="mut">لا توجد بيانات هذا الشهر – سيُطبع بيان «لا توجد».</p>')+'</div>';
+ const fBar=arr.length>2?'<div style="display:inline-flex;align-items:center;gap:6px"><input type="search" class="t-filter" placeholder="🔍 بحث في الجدول..." oninput="filterTableRows(this)" style="max-width:240px;padding:4px 10px;border:1px solid var(--line);border-radius:8px;font-size:12.5px"><span class="filter-count mut" style="font-size:11.5px"></span></div>':'';
+ return '<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px"><h3>'+d.t+' <button class="btn sm" data-act="addrow:'+k+'">＋ إضافة</button></h3>'+fBar+'</div>'+(arr.length?'<div class="tw"><table class="et wide"><thead><tr><th>م</th>'+d.cols.map(c=>'<th>'+c[1]+'</th>').join('')+'<th></th></tr></thead><tbody>'+arr.map((r,i)=>'<tr><td>'+(i+1)+'</td>'+d.cols.map(c=>'<td>'+inp('loy.'+k+'.'+i+'.'+c[0],{t:c[2]==='n'?'number':c[2]==='date'?'date':'text'})+'</td>').join('')+'<td><button class="btn sm bad" data-act="delrow:'+k+':'+i+'">✕</button></td></tr>').join('')+'</tbody></table></div>':'<p class="mut">لا توجد بيانات هذا الشهر – سيُطبع بيان «لا توجد».</p>')+'</div>';
 }
 /* ===== العاملون والأجازات ===== */
 const fl=(label,p,t,cls)=>'<label class="fld '+(cls||'')+'"><span>'+label+'</span>'+inp(p,{t:t||'text'})+'</label>';
@@ -833,8 +876,10 @@ function setEmpQuota(id,val){
 function leaveRem(e,u){const ded=u.a+(S.settings.casualCounts!==false?u.c:0);return quotaOf(e)-ded;}
 function vEmpLeaves(m){
  const arr=m.emps;if(!arr.length)return '<div class="card"><p class="mut">لا يوجد عاملون في هذا الشهر. أضفهم من «بيانات العاملين».</p></div>';
+ const fBar=arr.length>2?'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><input type="search" class="t-filter" placeholder="🔍 بحث عن موظف (بالاسم أو الوظيفة)..." oninput="filterTableRows(this)" style="max-width:280px;padding:5px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px"><span class="filter-count mut" style="font-size:12px"></span></div>':'';
  const rows=arr.map((e,i)=>'<tr><td>'+(i+1)+'</td><td class="rl nm"><b>'+esc(e.name||'—')+'</b><small>'+esc(e.job||'')+' · اعتيادي مستحق: <b>'+fmtInt(quotaOf(e))+'</b> يوم</small></td>'+LEAVE_TYPES.map(t=>'<td class="lc lt-'+t.cls+'">'+inp('emps.'+i+'.'+t.k,{t:'number',ph:'0'})+'</td>').join('')+'<td><output class="tot" data-lt="'+i+'">'+fmtInt(leaveTotal(e))+'</output></td><td><span class="pill2" data-ly="'+i+'"></span></td><td><span class="pill2" data-ls="'+i+'"></span></td></tr>').join('');
  return '<div class="card"><h3>🏖️ أجازات '+periodLabel(m.key)+' <span class="mut" style="font-weight:600;font-size:12.5px">أيام كل نوع خلال الشهر</span></h3>'
+ +fBar
  +'<div class="tw"><table class="et lvin" style="min-width:720px"><thead><tr><th>م</th><th class="rl">العامل</th>'+LEAVE_TYPES.map(t=>'<th class="lt-'+t.cls+'">'+t.label+'</th>').join('')+'<th>الإجمالي</th><th>متبقي اعتيادي</th><th>متبقي مرضي (من 3 أشهر)</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
  +'<p class="mut" style="margin:10px 0 0">الرصيد الاعتيادي السنوي يُحدَّد لكل موظف من تبويب «🪪 بيانات العاملين» حسب مدة الخدمة والسن. العارضة ثابتة ('+fmtInt(S.settings.casualDays||7)+' أيام سنوياً) وتُخصم من الرصيد السنوي؛ المرضي افتراضياً 3 أشهر ('+fmtInt(sickQuotaOf())+' يوماً) لكل موظف ولا يخصم من الرصيد الاعتيادي.</p></div>';
 }
@@ -849,6 +894,7 @@ function refreshLeaves(){
 }
 function vEmpCards(m){
  const arr=m.emps;
+ const fBar=arr.length>2?'<div class="card noprint" style="margin-bottom:12px;padding:10px 14px"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><input type="search" class="t-filter" placeholder="🔍 بحث في بطاقات العاملين (بالاسم، الرقم، الوظيفة، الدرجة)..." oninput="filterCardList(this, \'.ecard\')" style="flex:1;max-width:360px;padding:6px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px"><span class="filter-count mut" style="font-size:12.5px"></span></div></div>':'';
  const card=(e,i)=>'<div class="ecard"><div class="eh"><div><b>'+esc(e.name||'عامل جديد')+'</b><small>'+esc(e.job||'')+(e.no?' · '+esc(e.no):'')+'</small></div><button class="btn sm bad" data-act="delemp:'+i+'">حذف</button></div>'
   +'<div class="eg">'+fl('اسم العامل','emps.'+i+'.name','text','w2')+fl('الرقم الوظيفي','emps.'+i+'.no','text')+fl('العمل القائم به','emps.'+i+'.job','text','w2')
   +fl('المؤهل الدراسي','emps.'+i+'.qual','text')+fl('المجموعة الوظيفية','emps.'+i+'.grp','text')+fl('الدرجة','emps.'+i+'.grade','text')
@@ -857,9 +903,9 @@ function vEmpCards(m){
   +'<label class="fld"><span>رصيد الأجازات الاعتيادية السنوي (يوم)</span><input type="number" min="0" step="1" data-p="emps.'+i+'.annualQuota" data-empq="'+esc(e.no||e.name)+'" value="'+esc(quotaOf(e))+'" placeholder="حسب الخدمة والسن (21 / 30 / 45)"></label>'
   +'<label class="fld"><span>الأجازات العارضة والمرضية السنوية</span><input type="text" value="عارضة: '+fmtInt(S.settings.casualDays||7)+' أيام (ثابت) · مرضي: 3 أشهر ('+fmtInt(sickQuotaOf())+' يوم)" disabled class="calc"></label>'
   +fl('المسمى في كشف الحجز (اختياري)','emps.'+i+'.r3job','text','w2')+'<label class="fld chk"><input type="checkbox" data-p="emps.'+i+'.r3off"'+(e.r3off?' checked':'')+'><span>استبعاد من كشف مكافأة الحجز</span></label></div></div>';
- return '<div class="card"><h3>🪪 بيانات وإعدادات العاملين – الأجازات المستحقة ونموذج 7 وكشف الحجز <button class="btn sm pri" data-act="addemp">＋ إضافة عامل</button><button class="btn sm" data-act="raise">📈 تطبيق الزيادة السنوية</button></h3>'
- +'<p class="mut" style="margin-top:-6px">حدّد لكل موظف رصيد أجازاته الاعتيادية السنوية المستحقة حسب مدة الخدمة والسن (مثلاً 21 أو 30 أو 45 يوماً). الأجازات العارضة ثابتة ('+fmtInt(S.settings.casualDays||7)+' أيام)، والمرضية افتراضية 3 أشهر ('+fmtInt(sickQuotaOf())+' يوماً) لكل موظف.</p>'
- +(arr.length?'<div class="ecards">'+arr.map(card).join('')+'</div>':'<p class="mut">لا يوجد عاملون.</p>')+'</div>';
+ return fBar+'<div class="card"><h3>🪪 بيانات وإعدادات العاملين – الأجازات المستحقة ونموذج 7 وكشف الحجز <button class="btn sm pri" data-act="addemp">＋ إضافة عامل</button><button class="btn sm" data-act="raise">📈 تطبيق الزيادة السنوية</button></h3>'
+  +'<p class="mut" style="margin-top:-6px">حدّد لكل موظف رصيد أجازاته الاعتيادية السنوية المستحقة حسب مدة الخدمة والسن (مثلاً 21 أو 30 أو 45 يوماً). الأجازات العارضة ثابتة ('+fmtInt(S.settings.casualDays||7)+' أيام)، والمرضية افتراضية 3 أشهر ('+fmtInt(sickQuotaOf())+' يوماً) لكل موظف.</p>'
+  +(arr.length?'<div class="ecards">'+arr.map(card).join('')+'</div>':'<p class="mut">لا يوجد عاملون.</p>')+'</div>';
 }
 /* ===== إجماليات لكل بند ===== */
 const yearOf=k=>k.slice(0,4);
@@ -1174,9 +1220,9 @@ function rechainAll(){
 }
 
 /* ============ الإعدادات ============ */
-const GAS=`/* منظومة التقارير الشهرية – الشئون القانونية | خادم Google Sheets */
-const TOKEN = 'Mawadda2030*#';
-const SHEET_ID = '1KT67DXv5Kt0OvrdWtIG9e8CC8yNfzxjZGSASpT6JkZ8';
+const GAS_TEMPLATE=`/* منظومة التقارير الشهرية – الشئون القانونية | خادم Google Sheets */
+const TOKEN = '__TOKEN__';
+const SHEET_ID = '__SHEET_ID__';
 
 function ss_() { return SpreadsheetApp.openById(SHEET_ID); }
 function sh_(name, head) {
@@ -1249,6 +1295,13 @@ function replace_(name, head, key, rows) {
   if (head) s.getRange(1, 1, 1, w).setValues([head]);
   if (keep.length) s.getRange(2, 1, keep.length, w).setValues(keep);
 }`;
+function getGasCode(){
+ const tok=S.settings.sheetToken||'ضع_كلمة_السر_هنا';
+ let sid='معرف_ملف_جوجل_شيت';
+ const m=(S.settings.sheetLink||'').match(/\/d\/([a-zA-Z0-9-_]+)/);
+ if(m)sid=m[1];
+ return GAS_TEMPLATE.replace('__TOKEN__',tok).replace('__SHEET_ID__',sid);
+}
 const sf=(p,l,t)=>'<label class="fld"><span>'+l+'</span><input data-s="'+p+'" type="'+(t||'text')+'" value="'+esc(getP(S.settings,p))+'"></label>';
 function openSettings(){
  const s=S.settings,hasFS=!!window.showSaveFilePicker;
@@ -1261,7 +1314,7 @@ function openSettings(){
  +'<h4>1) ملف قاعدة بيانات مرتبط (مناسب لـ OneDrive الشخصي)</h4><p class="mut">اجعل الملف داخل مجلد OneDrive على جهازك، وسيحفظ التطبيق فيه تلقائياً مع كل تعديل ويرفعه OneDrive بنفسه. يعمل على Chrome وEdge.</p>'
  +(hasFS?'<div class="btns"><button class="btn pri" data-act="fnew">إنشاء ملف جديد</button><button class="btn" data-act="fopen">ربط ملف موجود</button>'+(fileHandle?'<button class="btn bad" data-act="funlink">إلغاء الربط</button>':'')+'</div><p>الحالة: '+(fileHandle?'مرتبط بـ <b>'+esc(fileHandle.name)+'</b>':'غير مرتبط')+'</p>':'<p class="warn warn">متصفحك لا يدعم ربط الملفات. استخدم Chrome أو Edge، أو استعمل النسخ الاحتياطي اليدوي أدناه.</p>')
  +'<h4>2) Google Sheets – قاعدة البيانات السحابية</h4>'+(s.sheetLink?'<div class="btns" style="margin-bottom:8px"><a class="btn" href="'+esc(s.sheetLink)+'" target="_blank" rel="noopener">📗 فتح ملف قاعدة البيانات</a></div>':'')+'<div class="fg">'+sf('sheetUrl','رابط تطبيق الويب (Web app URL – ينتهي بـ exec)','url')+sf('sheetLink','رابط ملف Google Sheets','url')+sf('sheetToken','كلمة السر (نفس TOKEN في الكود)','password')+'</div><label class="chk" style="margin-top:8px"><input type="checkbox" data-s="autoSync"'+(s.autoSync?' checked':'')+'> مزامنة تلقائية بعد كل تعديل</label><div class="btns"><button class="btn pri" data-act="sync">🔄 مزامنة الآن</button></div>'
- +'<details style="margin-top:10px"><summary>طريقة الإعداد (مرة واحدة)</summary><ol class="st"><li>افتح ملف قاعدة البيانات (الزر أعلاه)، ثم من القائمة: <b>الإضافات ← Apps Script</b>.</li><li>امسح المحتوى والصق الكود أدناه، وغيّر قيمة <b>TOKEN</b> لكلمة سر من اختيارك. (الكود مضبوط مسبقاً على معرّف الملف SHEET_ID).</li><li><b>نشر ← نشر جديد ← تطبيق ويب</b>: التنفيذ بصفتي، ومن لديه حق الوصول: <b>أي شخص</b>. وافق على الأذونات.</li><li>انسخ رابط التطبيق (ينتهي بـ exec) والصقه أعلاه مع كلمة السر.</li></ol><textarea class="code" id="gas" readonly>'+esc(GAS)+'</textarea><div class="btns"><button class="btn" data-act="copygas">نسخ الكود</button></div><p class="mut">أوراق الملف: <b>DB</b> (نسخة كاملة لكل شهر يقرأ منها التطبيق)، <b>ملخص الشهور</b> (صف لكل شهر بكل المؤشرات)، <b>Data</b> (الشهر / القسم / البند / القيمة)، <b>العاملون</b>، <b>صندوق الولاء</b>. لا تعدّل ورقة DB يدوياً؛ التعديل يتم من التطبيق.</p></details>'
+  +'<details style="margin-top:10px"><summary>طريقة الإعداد (مرة واحدة)</summary><ol class="st"><li>افتح ملف قاعدة البيانات (الزر أعلاه)، ثم من القائمة: <b>الإضافات ← Apps Script</b>.</li><li>امسح المحتوى والصق الكود أدناه، وغيّر قيمة <b>TOKEN</b> لكلمة سر من اختيارك. (الكود مضبوط مسبقاً على معرّف الملف SHEET_ID).</li><li><b>نشر ← نشر جديد ← تطبيق ويب</b>: التنفيذ بصفتي، ومن لديه حق الوصول: <b>أي شخص</b>. وافق على الأذونات.</li><li>انسخ رابط التطبيق (ينتهي بـ exec) والصقه أعلاه مع كلمة السر.</li></ol><textarea class="code" id="gas" readonly>'+esc(getGasCode())+'</textarea><div class="btns"><button class="btn" data-act="copygas">نسخ الكود</button></div><p class="mut">أوراق الملف: <b>DB</b> (نسخة كاملة لكل شهر يقرأ منها التطبيق)، <b>ملخص الشهور</b> (صف لكل شهر بكل المؤشرات)، <b>Data</b> (الشهر / القسم / البند / القيمة)، <b>العاملون</b>، <b>صندوق الولاء</b>. لا تعدّل ورقة DB يدوياً؛ التعديل يتم من التطبيق.</p></details>'
  +'<h4>الفتح من أي جهاز (سحابي)</h4><p class="mut">بعد ربط Google Sheets على هذا الجهاز، انسخ «رابط الفتح السريع» وافتحه على أي جهاز آخر: يُربط تلقائياً وتظهر كل البيانات المحفوظة في الشيت. الرابط يحتوي كلمة السر، فاحتفظ به لنفسك فقط.</p><div class="btns"><button class="btn pri" data-act="copycfg">🔗 نسخ رابط الفتح السريع</button><button class="btn" data-act="synctest">🔄 مزامنة الآن</button></div>'
 +'<h4>نسخ احتياطي</h4><div class="btns"><button class="btn" data-act="json">⬇️ تنزيل نسخة JSON</button><button class="btn" data-act="restore">⬆️ استيراد ودمج نسخة</button><input type="file" id="restoreFile" accept=".json,application/json" hidden></div>'
  +'<div class="btns" style="margin-top:16px"><button class="btn pri" data-act="closemodal">تم</button></div>');
@@ -1811,6 +1864,12 @@ window.__imp={parseGrid,monthOf,toNum,fields,nz,importFiles,readExcel,get pend()
 render();
 })();
 </script>
-
+<script>
+if('serviceWorker' in navigator){
+ window.addEventListener('load',()=>{
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+ });
+}
+</script>
 </body>
 </html>

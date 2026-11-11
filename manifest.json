@@ -1,0 +1,20 @@
+{
+  "name": "منظومة التقارير الشهرية – الشئون القانونية",
+  "short_name": "التقارير القانونية",
+  "description": "منظومة إدارة وحساب ومراجعة التقارير الشهرية – الشئون القانونية – المصرية للاتصالات",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f6f3fa",
+  "theme_color": "#5b2a86",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

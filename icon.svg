@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5b2a86"/>
+      <stop offset="100%" stop-color="#3c145d"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5d47a"/>
+      <stop offset="100%" stop-color="#d4af37"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="100" fill="url(#bg)"/>
+  <!-- Scales of Justice Symbol -->
+  <g fill="none" stroke="url(#gold)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" transform="translate(0, 10)">
+    <!-- Base -->
+    <path d="M196 410 L316 410" stroke-width="22"/>
+    <path d="M226 410 L226 390 L286 390 L286 410"/>
+    <!-- Central Pillar -->
+    <path d="M256 390 L256 140" stroke-width="20"/>
+    <circle cx="256" cy="120" r="16" fill="url(#gold)"/>
+    <!-- Beam -->
+    <path d="M140 180 L256 150 L372 180" stroke-width="18"/>
+    <!-- Left Pan -->
+    <path d="M140 180 L100 270 M140 180 L180 270" stroke-width="10"/>
+    <path d="M85 270 Q140 310 195 270 Z" fill="url(#gold)" opacity="0.85"/>
+    <!-- Right Pan -->
+    <path d="M372 180 L332 270 M372 180 L412 270" stroke-width="10"/>
+    <path d="M317 270 Q372 310 427 270 Z" fill="url(#gold)" opacity="0.85"/>
+  </g>
+</svg>
