@@ -1006,15 +1006,122 @@ function vAllow(m){
 }
 function vDash(m){
  const sub=S.ui.dsub||'ov',keys=monthKeys();
- const SUBS=[['ov','نظرة عامة'],['tot','الإجماليات'],['lv','الأجازات'],['al','البدلات'],['log','سجل الشهور']];
+ const SUBS=[['ov','نظرة عامة'],['charts','📊 تحليلات بيانية'],['tot','الإجماليات'],['lv','الأجازات'],['al','البدلات'],['log','سجل الشهور']];
  const seg='<div class="seg noprint">'+SUBS.map(([id,t])=>'<button class="'+(sub===id?'on':'')+'" data-act="dsub:'+id+'">'+t+'</button>').join('')+'</div>';
  let body='';
- if(sub==='tot')body=vTotals(m);
+ if(sub==='charts')body=vCharts(m);
+ else if(sub==='tot')body=vTotals(m);
  else if(sub==='lv')body=vLeaves(m);
  else if(sub==='al')body=vAllow(m);
  else if(sub==='log')body=vLog(m);
  else body=vOverview(m);
  return seg+body;
+}
+function vCharts(m){
+ const keys=monthKeys();
+ if(!keys.length)return '<div class="card"><p class="mut">لا توجد شهور مسجلة.</p></div>';
+ const vs=keys.map(k=>({k,label:periodLabel(k),short:shortLabel(k),col:kpis(S.months[k]).col,settle:kpis(S.months[k]).settle,q:kpis(S.months[k])}));
+ const cols=vs.map(x=>x.col);
+ const totCol=cols.reduce((a,b)=>a+b,0);
+ const avgCol=totCol/(cols.length||1);
+ const maxCol=Math.max(...cols,1);
+ const maxIdx=cols.indexOf(maxCol);
+ const peak=vs[maxIdx]||{label:'—',col:0};
+ 
+ const kpiCards='<div class="kpis k3" style="margin-bottom:14px">'
+  +'<div class="kpi"><i>📈</i><span>متوسط التحصيل الشهري</span><b>'+fmt(avgCol)+'</b><small>جنيه</small></div>'
+  +'<div class="kpi"><i>🏆</i><span>أعلى شهر تحصيلاً</span><b>'+fmt(peak.col)+'</b><small>'+peak.label+'</small></div>'
+  +'<div class="kpi"><i>💰</i><span>إجمالي متحصلات الفترة</span><b>'+fmt(totCol)+'</b><small>('+keys.length+' شهر)</small></div>'
+  +'</div>';
+ 
+ const W=800,H=220,padX=50,padY=30,botY=H-35;
+ const uw=W-2*padX,uh=botY-padY;
+ const n=vs.length;
+ const pts=vs.map((v,i)=>{
+  const x=n>1?padX+i*(uw/(n-1)):W/2;
+  const y=botY-(v.col/maxCol*uh);
+  return {x,y,v};
+ });
+ const lineD=pts.map((p,i)=>(i===0?'M':'L')+p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');
+ const areaD='M '+pts[0].x.toFixed(1)+','+botY+' '+pts.map(p=>'L '+p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ')+' L '+pts[pts.length-1].x.toFixed(1)+','+botY+' Z';
+ const avgY=botY-(avgCol/maxCol*uh);
+ 
+ const svgTrend='<div class="card"><h3>📈 منحنى تطور المتحصلات الشهرية <span class="mut" style="font-size:12.5px;font-weight:600">(انقر على أي شهر لفتحه)</span></h3>'
+  +'<div style="overflow-x:auto"><svg viewBox="0 0 '+W+' '+H+'" style="min-width:650px;width:100%;height:auto;overflow:visible">'
+  +'<defs><linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#7b4aa8" stop-opacity="0.38"/><stop offset="100%" stop-color="#7b4aa8" stop-opacity="0.02"/></linearGradient></defs>'
+  +'<line x1="'+padX+'" y1="'+botY+'" x2="'+(W-padX)+'" y2="'+botY+'" stroke="#d9d2e3" stroke-width="1.5"/>'
+  +'<line x1="'+padX+'" y1="'+avgY.toFixed(1)+'" x2="'+(W-padX)+'" y2="'+avgY.toFixed(1)+'" stroke="#d98a00" stroke-dasharray="4,4" stroke-width="1.5"/>'
+  +'<text x="'+(padX+6)+'" y="'+(avgY-6).toFixed(1)+'" fill="#d98a00" font-size="11" font-weight="700">المتوسط: '+fmtInt(avgCol)+' ج.م</text>'
+  +'<path d="'+areaD+'" fill="url(#chartGrad)"/>'
+  +'<path d="'+lineD+'" fill="none" stroke="#5b2a86" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'
+  +pts.map(p=>{
+    const isCur=p.v.k===m.key;
+    return '<g style="cursor:pointer" data-act="openmonth:'+p.v.k+'">'
+     +'<circle cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="'+(isCur?7:5)+'" fill="'+(isCur?'#e74c3c':'#5b2a86')+'" stroke="#fff" stroke-width="2"><title>'+p.v.label+': '+fmt(p.v.col)+' ج.م</title></circle>'
+     +'<text x="'+p.x.toFixed(1)+'" y="'+(p.y-10).toFixed(1)+'" text-anchor="middle" font-size="11" font-weight="700" fill="'+(isCur?'#e74c3c':'#1d1b24')+'">'+fmtInt(p.v.col)+'</text>'
+     +'<text x="'+p.x.toFixed(1)+'" y="'+(botY+20)+'" text-anchor="middle" font-size="11.5" font-weight="600" fill="#6b6778">'+esc(p.v.short)+'</text>'
+     +'</g>';
+  }).join('')
+  +'</svg></div></div>';
+
+ const v=ctx(m),tot=v('col.total');
+ const cItems=COLS.filter(c=>!NOTOT.includes(c[0])&&v('col.'+c[0])>0);
+ const rad=65,circ=2*Math.PI*rad;
+ let offset=0;
+ const slices=cItems.map(c=>{
+  const val=v('col.'+c[0]),pct=tot>0?val/tot:0,dash=pct*circ;
+  const s='<circle cx="100" cy="100" r="'+rad+'" fill="none" stroke="'+c[2]+'" stroke-width="26" stroke-dasharray="'+dash.toFixed(2)+' '+circ.toFixed(2)+'" stroke-dashoffset="'+(-offset).toFixed(2)+'"><title>'+esc(c[1])+': '+fmt(val)+' ('+fmt(pct*100,1)+'%)</title></circle>';
+  offset+=dash;
+  return s;
+ }).join('');
+ const svgDonut=tot>0?('<div style="position:relative;display:flex;align-items:center;justify-content:center;width:180px;height:180px"><svg viewBox="0 0 200 200" style="width:180px;height:180px;transform:rotate(-90deg);flex-shrink:0">'
+  +'<circle cx="100" cy="100" r="'+rad+'" fill="none" stroke="#efe7f6" stroke-width="26"/>'
+  +slices+'</svg><div style="position:absolute;text-align:center;pointer-events:none"><div style="font-size:10.5px;color:var(--mut);font-weight:600">إجمالي الشهر</div><div style="font-size:13px;font-weight:800;color:var(--p)">'+fmtInt(tot)+'</div><div style="font-size:10px;color:var(--mut)">جنيه</div></div></div>')
+  :'<div style="width:180px;height:180px;border-radius:50%;background:#efe7f6;display:flex;align-items:center;justify-content:center;color:var(--mut);font-weight:700">لا توجد متحصلات</div>';
+ 
+ const donutLegend='<div style="display:flex;flex-direction:column;gap:8px;flex:1;min-width:220px">'
+  +cItems.map(c=>{
+   const val=v('col.'+c[0]),pct=tot>0?(val/tot*100):0;
+   return '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12.5px;padding-bottom:4px;border-bottom:1px dashed var(--line)">'
+    +'<div style="display:flex;align-items:center;gap:6px"><i style="display:inline-block;width:11px;height:11px;border-radius:3px;background:'+c[2]+'"></i><b>'+esc(c[1])+'</b></div>'
+    +'<div style="font-weight:700">'+fmt(val)+' <small class="mut">('+fmt(pct,1)+'%)</small></div>'
+    +'</div>';
+  }).join('')+'</div>';
+ 
+ const donutCard='<div class="card"><h3>🍩 توزيع مصادر المتحصلات – '+periodLabel(m.key)+'</h3>'
+  +'<div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-top:10px">'
+  +svgDonut+donutLegend+'</div></div>';
+
+ const pb=(lbl,fin,totCount,clr)=>{
+  const pct=totCount>0?Math.min(100,fin/totCount*100):0;
+  return '<div style="margin-bottom:14px">'
+   +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;font-size:13px">'
+   +'<span><b>'+lbl+'</b> (منجز: <b>'+fmtInt(fin)+'</b> من <b>'+fmtInt(totCount)+'</b>)</span>'
+   +'<b style="color:'+clr+'">'+fmt(pct,1)+'%</b>'
+   +'</div>'
+   +'<div style="background:#efe7f6;height:9px;border-radius:6px;overflow:hidden">'
+   +'<div style="background:'+clr+';width:'+pct.toFixed(1)+'%;height:100%;border-radius:6px;transition:width .3s"></div>'
+   +'</div></div>';
+ };
+
+ const labFin=num(v('f2.lab.lf'))+num(v('f2.lab.la'))+num(v('f2.lab.nf'))+num(v('f2.lab.na'));
+ const labTot=num(v('f2.lab.circL'))+num(v('f2.lab.circN'));
+ const civFin=num(v('f2.civ.t.tot'));
+ const civTot=num(v('f2.civ.t.under'))+num(v('f2.civ.t.in'));
+ const invFin=num(v('f1.inv.fin'));
+ const invTot=num(v('f1.inv.under'))+num(v('f1.inv.in'));
+ const cmpFin=num(v('f1.cmp.fin'));
+ const cmpTot=num(v('f1.cmp.under'))+num(v('f1.cmp.in'));
+
+ const progressCard='<div class="card"><h3>⚖️ معدلات إنجاز وفض القضايا والملفات – '+periodLabel(m.key)+'</h3>'
+  +'<div style="margin-top:12px">'
+  +pb('القضايا العمالية',labFin,labTot,'#1e8e5a')
+  +pb('القضايا المدنية',civFin,civTot,'#5b2a86')
+  +pb('التحقيقات',invFin,invTot,'#7b4aa8')
+  +pb('الشكاوى والتظلمات',cmpFin,cmpTot,'#d98a00')
+  +'</div></div>';
+
+ return kpiCards+svgTrend+'<div class="dtwo" style="margin-top:14px"><div>'+donutCard+'</div><div>'+progressCard+'</div></div>';
 }
 function vOverview(m){
  const keys=monthKeys(),k=kpis(m),w=warnings(m),pk=keys[keys.indexOf(m.key)-1],pq=pk?kpis(S.months[pk]):null;
@@ -1074,7 +1181,23 @@ function renderView(){
  el.innerHTML=t==='dash'?vDash(m):t==='col'?vCol(m):t==='jud'?vJud(m):t==='f1'?vF1(m):t==='f2'?vF2(m):t==='loy'?rowEd('for')+rowEd('ag')+rowEd('pend'):t==='emp'?vEmp(m):vPrn(m);
  refreshCalc();if(t==='prn')drawPages();
 }
-function toast(t){const d=document.createElement('div');d.className='toast noprint';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2800);}
+function toast(t,undoFn){
+ const d=document.createElement('div');d.className='toast noprint';
+ if(typeof undoFn==='function'){
+  d.innerHTML='<span>'+esc(t)+'</span>';
+  const b=document.createElement('button');b.className='btn sm';
+  b.style.cssText='margin-right:10px;background:#fff;color:var(--p);font-weight:700;padding:2px 10px;border-radius:6px;box-shadow:0 1px 4px #0002;cursor:pointer';
+  b.textContent='تراجع ↩';
+  b.onclick=()=>{d.remove();undoFn();};
+  d.appendChild(b);
+  document.body.appendChild(d);
+  setTimeout(()=>d.remove(),6000);
+ }else{
+  d.textContent=t;
+  document.body.appendChild(d);
+  setTimeout(()=>d.remove(),2800);
+ }
+}
 function openModal(h){$('#modal').innerHTML='<div class="modal noprint" data-act="closebg"><div class="mbox">'+h+'</div></div>';}
 function closeModal(){$('#modal').innerHTML='';render();}
 function updateStatus(){
@@ -1120,11 +1243,28 @@ const ACT={
   if(!confirm('سيتم استبدال «تحت اليد» في '+d.length+' شهر (يبدأ من '+periodLabel(d[0][0])+') بمتبقي الشهر السابق لكل منها، وسيحل محل أي قيم أدخلتها يدوياً في هذه الخانات. متابعة؟'))return;
   const n=rechainAll();persist();render();toast('تمت إعادة الترحيل في '+n+' شهر');
  },
- delmonth(k){if(!confirm('حذف بيانات '+periodLabel(k)+' نهائياً؟'))return;delete S.months[k];S.deleted[k]=now();S.pendDel.push(k);if(S.ui.cur===k)S.ui.cur=monthKeys().slice(-1)[0]||null;persist();render();},
+ delmonth(k){
+  if(!confirm('حذف بيانات '+periodLabel(k)+'؟ يمكنك التراجع فوراً من الإشعار.'))return;
+  const backup=clone(S.months[k]);
+  delete S.months[k];S.deleted[k]=now();S.pendDel.push(k);
+  if(S.ui.cur===k)S.ui.cur=monthKeys().slice(-1)[0]||null;
+  persist();render();
+  toast('تم حذف '+periodLabel(k),()=>{
+   S.months[k]=backup;delete S.deleted[k];S.pendDel=S.pendDel.filter(x=>x!==k);
+   S.ui.cur=k;persist();render();toast('تمت استعادة بيانات '+periodLabel(k));
+  });
+ },
  addrow(k){const m=M();m.loy[k].push({});touch();renderView();},
  delrow(k,i){M().loy[k].splice(+i,1);touch();renderView();},
  addemp(){M().emps.push({});touch();renderView();},
- delemp(i){if(!confirm('حذف هذا العامل من بيانات الشهر؟'))return;M().emps.splice(+i,1);touch();renderView();},
+ delemp(i){
+  const emp=clone(M().emps[+i]);
+  if(!confirm('حذف العامل ('+(emp.name||'بلا اسم')+') من بيانات الشهر؟'))return;
+  M().emps.splice(+i,1);touch();renderView();
+  toast('تم حذف العامل ('+(emp.name||'')+')',()=>{
+   M().emps.splice(+i,0,emp);touch();renderView();toast('تمت استعادة العامل');
+  });
+ },
  print(){
   if(!M())return;
   if(S.ui.tab!=='prn'){S.ui.tab='prn';save();renderSide();renderHdr();renderView();}
