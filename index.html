@@ -45,6 +45,11 @@ aside{background:#fff;border-radius:14px;padding:12px;box-shadow:0 1px 6px #0001
 input[type=text],input[type=number],input[type=date],input[type=month],input[type=url],input[type=password],select,textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink)}
 input:focus,select:focus,textarea:focus{outline:2px solid var(--p2);border-color:var(--p2)}
 input.calc{background:#f7f4fb;color:var(--p)}input.calc.ov{background:#fff4d6;border-color:var(--warn)}
+input.carried{background:#f3edf9!important;color:#5b2a86!important;font-weight:700;border:1px solid #d4c4e8!important;cursor:default}
+input.base-under{border:2px solid #bba3d9!important;background:#faf7ff!important}
+.carry-banner{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;margin-bottom:14px;font-size:13px;font-weight:600}
+.carry-banner.base{background:#fef7e7;color:#925400;border:1px solid #ffe1a6}
+.carry-banner.chain{background:#f4edf9;color:#5b2a86;border:1px solid #dcc8f1}
 .cf input{border-color:var(--c);border-width:2px;font-size:16px;font-weight:700}
 .total{margin-top:14px;background:var(--pl);border-radius:12px;padding:12px 16px}
 .total b{font-size:22px;color:var(--p);margin-right:10px}.words{color:var(--mut);margin-top:4px}
@@ -332,7 +337,13 @@ const MONTHS=['يناير','فبراير','مارس','أبريل','مايو','ي
 const LSK='legalMonthlyDB.v1';
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const num=v=>{const x=parseFloat(v);return isFinite(x)?x:0};
+const num=v=>{
+ if(typeof v==='number')return isFinite(v)?v:0;
+ if(v==null||v==='')return 0;
+ const s=String(v).replace(/[٠-٩]/g,d=>'0123456789'['٠١٢٣٤٥٦٧٨٩'.indexOf(d)]).replace(/[۰-۹]/g,d=>'0123456789'['۰۱۲۳۴۵۶۷۸۹'.indexOf(d)]).replace(/[٬،\s]/g,'').replace(/٫/g,'.').replace(/,/g,'');
+ const x=parseFloat(s);
+ return isFinite(x)?x:0;
+};
 const fmt=(v,d=2)=>num(v).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
 const fmtInt=v=>num(v).toLocaleString('en-US',{maximumFractionDigits:0});
 const now=()=>new Date().toISOString();
@@ -373,7 +384,8 @@ function unitWords(n,u){
  if(r>=3&&r<=10)return w+' '+pl;if(r>=11)return w+' '+u+'اً';return w+' '+u;
 }
 function moneyWords(x){
- x=Math.round(num(x)*100)/100;const i=Math.floor(x),p=Math.round((x-i)*100);let s='';
+ const totalPiasters=Math.round(num(x)*100);
+ const i=Math.floor(totalPiasters/100),p=totalPiasters%100;let s='';
  if(i>0)s=unitWords(i,'جنيه');
  if(p>0)s+=(s?' و':'')+unitWords(p,'قرش');
  if(!s)s='صفر جنيه';
@@ -487,6 +499,7 @@ function load(){
  }catch(e){}
  if(!Object.keys(S.months).length&&!Object.keys(S.deleted).length){const m=seedMonth();S.months[m.key]=m;S.ui.cur=m.key;}
  cleanMonthKeys();
+ cascadeChain();
  if(!S.months[S.ui.cur])S.ui.cur=monthKeys().slice(-1)[0]||null;
 }
 function save(){try{localStorage.setItem(LSK,JSON.stringify({settings:S.settings,months:S.months,deleted:S.deleted,pendDel:S.pendDel,pushed:S.pushed,ui:S.ui}));}catch(e){toast('تعذر الحفظ المحلي: '+e.message)}}
@@ -501,8 +514,8 @@ function calcAll(m){
  for(const k of ['cass','crim']){const b='f1.'+k+'.';c[b+'tot']=g(b+'for')+g(b+'ag');c[b+'rem']=g(b+'under')+g(b+'in')-c[b+'tot'];}
  for(const k of ['inv','cmp','fat','con','seiz']){const b='f1.'+k+'.';c[b+'rem']=g(b+'under')+g(b+'in')-g(b+'fin');}
  c['f1.exe.rem']=g('f1.exe.under')+g('f1.exe.in')-g('f1.exe.fin');
- c['f1.exe.vrem']=g('f1.exe.vunder')+g('f1.exe.vin')-g('f1.exe.vfin');
- c['col.total']=COLS.reduce((a,x)=>NOTOT.includes(x[0])?a:a+g('col.'+x[0]),0);
+ c['f1.exe.vrem']=Math.round((g('f1.exe.vunder')+g('f1.exe.vin')-g('f1.exe.vfin'))*100)/100;
+ c['col.total']=Math.round(COLS.reduce((a,x)=>NOTOT.includes(x[0])?a:a+g('col.'+x[0]),0)*100)/100;
  c['f1.seiz.coll']=c['col.total'];
  const L='f2.lab.';
  c[L+'lrem']=g(L+'lu')+g(L+'li')-g(L+'lf')-g(L+'la');
@@ -776,6 +789,16 @@ function cell(base,sp){
  const [k,ty='']=sp.split(':');const p=base+'.'+k;
  if(ty==='o')return '<td><output data-o="'+p+'"></output></td>';
  if(ty==='c'||ty==='c$')return '<td>'+inp(p,{calc:1,cls:'calc',ph:'تلقائي'}).replace('<input ','<input title="محسوب تلقائياً – اكتب قيمة لتجاوزه، وامسحها للعودة للحساب" ')+'</td>';
+ const isCarry=CARRY.some(([t])=>t===p);
+ if(isCarry){
+  const ks=monthKeys(),isBase=!ks.length||(M()&&ks[0]===M().key);
+  if(isBase){
+   return '<td>'+inp(p,{ph:ty==='$'?'0.00':'0',cls:'base-under'}).replace('<input ','<input title="الرصيد الافتتاحي لشهر الأساس – يُدخل يدوياً وتُرحَّل منه الشهور اللاحقة" ')+'</td>';
+  }else{
+   const pk=ks[ks.indexOf(M().key)-1];
+   return '<td>'+inp(p,{ph:ty==='$'?'0.00':'0',cls:'calc carried'}).replace('<input ','<input readonly tabindex="-1" title="مرحّل تلقائياً من متبقي شهر '+(pk?periodLabel(pk):'السابق')+'" ')+'</td>';
+  }
+ }
  return '<td>'+inp(p,{ph:ty==='$'?'0.00':'0'})+'</td>';
 }
 function blockForm(b){
@@ -795,9 +818,19 @@ function vJud(m){
  return '<p class="mut">اختر لكل بند: مبلغ، أو «غير مقدرة القيمة»، أو «لا يوجد»، أو «عدم الإدراج» لإخفاء البند من التقرير. المصالحات تُسحب تلقائياً من نموذج 1.</p>'+JUD.map(([t,its])=>'<div class="card"><h3>'+t+'</h3>'+its.map(([k,l])=>voEd(m,k,l)).join('')+'</div>').join('');
 }
 function vF1(m){
- return F1.map(blockForm).join('')+'<div class="card"><h3>ملحوظة تُطبع أسفل القضاء الجنائي (اتركها فارغة لإخفائها)</h3><textarea data-p="f1.note" rows="3">'+esc(m.f1.note||'')+'</textarea></div><p class="mut">«المبلغ المحصل» يُسحب تلقائياً من إجمالي المتحصلات، والحقول الملونة بالبنفسجي محسوبة تلقائياً ويمكن تجاوزها يدوياً.</p>';
+ const ks=monthKeys(),isBase=ks[0]===m.key,idx=ks.indexOf(m.key),pk=idx>0?ks[idx-1]:null;
+ const banner=isBase
+  ?'<div class="carry-banner base">⭐ <b>شهر الأساس الافتتاحي ('+periodLabel(m.key)+'):</b> أرصدة «تحت اليد» تُدخل هنا يدوياً وتعتبر الأساس لترحيل كافة الشهور اللاحقة.</div>'
+  :'<div class="carry-banner chain">🔗 <b>ترحيل تلقائي متسلسل:</b> خانات «تحت اليد» مرحّلة آلياً من متبقي شهر '+periodLabel(pk)+' ومقفلة لضمان دقة السلسلة المالية.</div>';
+ return banner+F1.map(blockForm).join('')+'<div class="card"><h3>ملحوظة تُطبع أسفل القضاء الجنائي (اتركها فارغة لإخفائها)</h3><textarea data-p="f1.note" rows="3">'+esc(m.f1.note||'')+'</textarea></div><p class="mut">«المبلغ المحصل» يُسحب تلقائياً من إجمالي المتحصلات، والحقول الملونة بالبنفسجي محسوبة تلقائياً ويمكن تجاوزها يدوياً.</p>';
 }
-function vF2(m){return F2.map(blockForm).join('')+'<p class="mut">بيانات الجنح والجنايات في نموذج 2 تُؤخذ تلقائياً من «القضاء الجنائي» في نموذج 1.</p>';}
+function vF2(m){
+ const ks=monthKeys(),isBase=ks[0]===m.key,idx=ks.indexOf(m.key),pk=idx>0?ks[idx-1]:null;
+ const banner=isBase
+  ?'<div class="carry-banner base">⭐ <b>شهر الأساس الافتتاحي ('+periodLabel(m.key)+'):</b> أرصدة «تحت اليد» تُدخل هنا يدوياً وتعتبر الأساس لترحيل كافة الشهور اللاحقة.</div>'
+  :'<div class="carry-banner chain">🔗 <b>ترحيل تلقائي متسلسل:</b> خانات «تحت اليد» مرحّلة آلياً من متبقي شهر '+periodLabel(pk)+' ومقفلة لضمان دقة السلسلة المالية.</div>';
+ return banner+F2.map(blockForm).join('')+'<p class="mut">بيانات الجنح والجنايات في نموذج 2 تُؤخذ تلقائياً من «القضاء الجنائي» في نموذج 1.</p>';
+}
 const normAr=s=>String(s==null?'':s).toLowerCase().replace(/[٠-٩]/g,d=>'0123456789'['٠١٢٣٤٥٦٧٨٩'.indexOf(d)]).replace(/[ً-ْـ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/[\s\-_/\\,،.]+/g,' ');
 function filterTableRows(inp){
  const q=normAr(inp.value.trim());
@@ -1156,6 +1189,7 @@ function refreshCalc(){
  const m=M();if(!m)return;const v=ctx(m);
  document.querySelectorAll('[data-o]').forEach(o=>{o.textContent=o.dataset.m?fmt(v(o.dataset.o)):fmtInt(v(o.dataset.o));});
  document.querySelectorAll('input[data-calc]').forEach(i=>{const p=i.dataset.p,ov=getP(m,p),has=ov!==undefined&&ov!=='';i.classList.toggle('ov',has);if(!has)i.value=+v.C[p].toFixed(2);});
+ document.querySelectorAll('input.carried').forEach(i=>{const p=i.dataset.p;if(p)i.value=getP(m,p)??'';});
  const wd=$('#words');if(wd)wd.textContent=moneyWords(v('col.total'));
 }
 
@@ -1220,7 +1254,7 @@ document.addEventListener('input',e=>{
  setP(m,p,t.type==='checkbox'?t.checked:t.value);
  if(t.dataset.empq!==undefined)setEmpQuota(t.dataset.empq,t.value);
  if(t.dataset.vo!==undefined){const a=t.parentElement.querySelector('input');if(a)a.hidden=t.value!=='amount';}
- m.updatedAt=now();refreshCalc();refreshLeaves();persist();
+ m.updatedAt=now();cascadeChain(m.key);refreshCalc();refreshLeaves();persist();
 });
 const ACT={
  tab(id){S.ui.tab=id;save();renderSide();renderHdr();renderView();},
@@ -1235,23 +1269,21 @@ const ACT={
  createmonth(){
   const k=$('#nmKey').value;if(!/^\d{4}-\d{2}$/.test(k))return toast('اختر الشهر');
   if(S.months[k])return toast('هذا الشهر موجود بالفعل');
-  const m=newMonth(k,$('#nmCarry').checked);S.months[k]=m;delete S.deleted[k];S.ui.cur=k;S.ui.tab='col';closeModal();persist();render();
+  const m=newMonth(k,$('#nmCarry').checked);S.months[k]=m;delete S.deleted[k];S.ui.cur=k;S.ui.tab='col';closeModal();cascadeChain();persist();render();
   if(monthKeys().some(x=>x>k))toast(carryHint(k));
  },
  rechain(){
-  const d=chainDiffs();if(!d.length)return toast('الأرصدة متسلسلة بالفعل');
-  if(!confirm('سيتم استبدال «تحت اليد» في '+d.length+' شهر (يبدأ من '+periodLabel(d[0][0])+') بمتبقي الشهر السابق لكل منها، وسيحل محل أي قيم أدخلتها يدوياً في هذه الخانات. متابعة؟'))return;
-  const n=rechainAll();persist();render();toast('تمت إعادة الترحيل في '+n+' شهر');
+  const n=rechainAll();persist();render();toast('تمت إعادة تسلسل وترحيل الأرصدة في '+n+' شهر بنجاح');
  },
  delmonth(k){
   if(!confirm('حذف بيانات '+periodLabel(k)+'؟ يمكنك التراجع فوراً من الإشعار.'))return;
   const backup=clone(S.months[k]);
   delete S.months[k];S.deleted[k]=now();S.pendDel.push(k);
   if(S.ui.cur===k)S.ui.cur=monthKeys().slice(-1)[0]||null;
-  persist();render();
+  cascadeChain();persist();render();
   toast('تم حذف '+periodLabel(k),()=>{
    S.months[k]=backup;delete S.deleted[k];S.pendDel=S.pendDel.filter(x=>x!==k);
-   S.ui.cur=k;persist();render();toast('تمت استعادة بيانات '+periodLabel(k));
+   S.ui.cur=k;cascadeChain();persist();render();toast('تمت استعادة بيانات '+periodLabel(k));
   });
  },
  addrow(k){const m=M();m.loy[k].push({});touch();renderView();},
@@ -1348,15 +1380,35 @@ function chainDiffs(){
  }
  return out;
 }
-function carryHint(k){const ks=monthKeys(),i=ks.indexOf(k);return (i===0?periodLabel(k)+' أصبح شهر الأساس. ':'')+'راجع «تسلسل الأرصدة» في لوحة المتابعة لإعادة ترحيل الشهور اللاحقة.';}
-function rechainAll(){
- const ks=monthKeys();let n=0;
- for(let i=1;i<ks.length;i++){
-  const m=S.months[ks[i]],pv=ctx(S.months[ks[i-1]]),v=ctx(m);let ch=false;
-  CARRY.forEach(([t,s])=>{if(Math.abs(v(t)-pv(s))>0.005){setP(m,t,pv(s));ch=true;}});
-  if(ch){m.updatedAt=now();n++;}
+function carryHint(k){const ks=monthKeys(),i=ks.indexOf(k);return (i===0?periodLabel(k)+' أصبح شهر الأساس. ':'')+'تم تسلسل الأرصدة وترحيلها تلقائياً.';}
+function cascadeChain(fromKey){
+ const ks=monthKeys();
+ if(ks.length<2)return 0;
+ const startIdx=fromKey?Math.max(1,ks.indexOf(fromKey)+1):1;
+ let changes=0;
+ for(let i=startIdx;i<ks.length;i++){
+  const prevM=S.months[ks[i-1]];
+  const curM=S.months[ks[i]];
+  if(!prevM||!curM)continue;
+  const pv=ctx(prevM);
+  let ch=false;
+  CARRY.forEach(([target,source])=>{
+   const prevVal=pv(source);
+   const curVal=getP(curM,target);
+   if(curVal===undefined||curVal===''||Math.abs(num(curVal)-prevVal)>0.0001){
+    setP(curM,target,prevVal);
+    ch=true;
+   }
+  });
+  if(ch){
+   curM.updatedAt=now();
+   changes++;
+  }
  }
- return n;
+ return changes;
+}
+function rechainAll(){
+ return cascadeChain();
 }
 
 /* ============ الإعدادات ============ */
@@ -1935,6 +1987,7 @@ function applyImport(){
   ['for','ag','pend'].forEach(t=>{if(o.loy[t].length)m.loy[t]=repl?o.loy[t]:mergeBy(m.loy[t],o.loy[t],'no');});
   m.updatedAt=now();n++;last=k;
  });
+ cascadeChain();
  PEND=null;if(last)S.ui.cur=last;closeModal();persist();render();toast('تم استيراد '+n+' شهر بنجاح');
 }
 function mergeBy(a,b,key){const r=(a||[]).slice();b.forEach(x=>{const i=x[key]?r.findIndex(y=>nz(y[key])===nz(x[key])):-1;if(i>=0)r[i]=Object.assign({},r[i],x);else r.push(x);});return r;}
@@ -1965,10 +2018,10 @@ Object.assign(ACT,{
  tcopy(){const f=S.months[val('tCpF')],t=S.months[val('tCpT')],p=val('tCpP');if(!f||!t)return;if(f===t)return toast('اختر شهرين مختلفين');
   if(!confirm('استبدال «'+PARTS.find(x=>x[0]===p)[1]+'» في '+periodLabel(t.key)+' بنسخة من '+periodLabel(f.key)+'؟'))return;t[p]=clone(f[p]);normalize(t);t.updatedAt=now();persist();render();toast('تم النسخ');},
  tdup(){const f=S.months[val('tDupF')],k=val('tDupT');if(!f||!okKey(k))return toast('اختر الشهر الجديد');if(S.months[k])return toast('هذا الشهر موجود بالفعل');
-  const m=clone(f);m.key=k;m.reportDate=reportIso(k);m.updatedAt=now();S.months[k]=normalize(m);delete S.deleted[k];S.ui.cur=k;persist();render();toast('تم إنشاء '+periodLabel(k));},
+  const m=clone(f);m.key=k;m.reportDate=reportIso(k);m.updatedAt=now();S.months[k]=normalize(m);delete S.deleted[k];S.ui.cur=k;cascadeChain();persist();render();toast('تم إنشاء '+periodLabel(k));},
  tmove(){const fk=val('tMvF'),k=val('tMvT');const f=S.months[fk];if(!f||!okKey(k))return toast('اختر الشهر الهدف');if(S.months[k])return toast('الشهر الهدف موجود بالفعل – احذفه أولاً');
   if(!confirm('نقل بيانات '+periodLabel(fk)+' إلى '+periodLabel(k)+'؟'))return;
-  const m=clone(f);m.key=k;m.reportDate=reportIso(k);m.updatedAt=now();S.months[k]=normalize(m);delete S.deleted[k];delete S.months[fk];S.deleted[fk]=now();S.pendDel.push(fk);S.ui.cur=k;persist();render();toast('تم النقل');},
+  const m=clone(f);m.key=k;m.reportDate=reportIso(k);m.updatedAt=now();S.months[k]=normalize(m);delete S.deleted[k];delete S.months[fk];S.deleted[fk]=now();S.pendDel.push(fk);S.ui.cur=k;cascadeChain();persist();render();toast('تم النقل');},
  impapply(){applyImport();},
  async tpl(){
   try{await ensureXlsx();}catch(e){return toast('تعذر تحميل مكتبة Excel');}
