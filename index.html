@@ -98,15 +98,23 @@ input.base-under{border:2px solid #bba3d9!important;background:#faf7ff!important
 .mbox textarea.code{direction:ltr;text-align:left;font-family:Consolas,monospace;font-size:12px;height:190px}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:10px 18px;border-radius:24px;z-index:99;font-weight:600}
 .pages{display:flex;flex-direction:column;align-items:center;gap:18px;padding:6px 0 30px}
-.ri{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:10px;padding:4px 6px 4px 10px;background:#fff}
-.ori{border:1px solid var(--line);background:#faf8fc;color:var(--mut);border-radius:8px;padding:2px 8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+.ri{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:10px;padding:4px 6px 4px 10px;background:#fff;transition:border-color .15s,box-shadow .15s}
+.ri:hover{border-color:#c6b4df;box-shadow:0 2px 8px #5b2a8614}
+.ori,.rbtn{border:1px solid var(--line);background:#faf8fc;color:var(--mut);border-radius:7px;padding:2px 7px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;transition:background .15s,color .15s,border-color .15s}
 .ori.on{background:var(--p);border-color:var(--p);color:#fff}
+.rbtn:hover{background:var(--pl);color:var(--p);border-color:#c6b4df}
+.rbtn.pri{color:var(--p);border-color:#d6c6eb;background:#f7f2fc}
+.rbtn.pri:hover{background:var(--p);color:#fff;border-color:var(--p)}
+.ind-box{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;background:#faf7fd;border:1px solid #e3d8f1;border-radius:12px;padding:10px 14px;margin:10px 0}
+.ind-box label{font-weight:700;color:var(--p);font-size:13px;display:flex;align-items:center;gap:8px}
+.ind-box select{min-width:220px;width:auto}
 details summary{cursor:pointer;font-weight:700;color:var(--p)}
 ol.st{line-height:1.9;padding-right:20px}
 </style>
 <style id="sheetcss">
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
 body,button,input,select,textarea,.sheet,.sheet *{font-family:'Cairo','Segoe UI',Tahoma,Arial,sans-serif!important}
+.sheet,.sheet *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
 .sheet .two.se>tbody>tr>td:first-child{width:32%}
 .sheet .two.se>tbody>tr>td:last-child{width:68%}
 .sheet .two.se .t th,.sheet .two.se .t td,.sheet .two.se .t th.rl{white-space:nowrap;padding-inline:5px}
@@ -114,19 +122,23 @@ body,button,input,select,textarea,.sheet,.sheet *{font-family:'Cairo','Segoe UI'
 .sheet::before{content:'';position:absolute;top:0;right:0;left:0;height:4mm;background:linear-gradient(90deg,#3d1a5c,#5b2a86 55%,#8a4fc0)}
 .sheet.land{width:297mm;min-height:208mm;padding:9mm 10mm 14mm;font-size:9pt;page:land}
 .sheet table{border-collapse:collapse;width:100%}
-.sheet .lh{margin:1mm 0 6px;border-bottom:2px solid #5b2a86}
-.sheet .lh td{vertical-align:middle;padding:0 0 5px}
+.sheet .lh{margin:1mm 0 6px;border-bottom:2.5px solid #5b2a86}
+.sheet .lh td{vertical-align:middle;padding:0 0 6px}
 .sheet .lh .lg{width:74px}.sheet .lh .lg img{max-height:62px;max-width:68px}
 .sheet .org{font-size:16pt;font-weight:800;color:#5b2a86;line-height:1.25}
 .sheet .sub{font-size:9.5pt;color:#5d5868;line-height:1.45}
-.sheet .lh .dt{text-align:left;white-space:nowrap;width:180px}
-.sheet .meta{display:inline-block;border:1px solid #d9d2e3;border-radius:8px;padding:4px 10px;font-size:9.5pt;line-height:1.7;text-align:right;background:#faf8fc}
+.sheet .lh .dt{text-align:left;white-space:nowrap;width:185px}
+.sheet .meta{display:inline-block;border:1px solid #d4c6e6;border-right:3.5px solid #5b2a86;border-radius:8px;padding:4px 10px;font-size:9.5pt;line-height:1.7;text-align:right;background:#faf8fc}
 .sheet .meta b{color:#3d1a5c}
-.sheet .ttl{background:linear-gradient(90deg,#4a1f70,#6a3a96);color:#fff;border-radius:8px;padding:5px 16px;text-align:center;font-weight:800;font-size:12.5pt;margin:6px 0}
+.sheet .ttl{background:linear-gradient(90deg,#4a1f70,#6a3a96);color:#fff;border-radius:8px;padding:6px 16px;text-align:center;font-weight:800;font-size:12.5pt;margin:6px 0;letter-spacing:.1px}
 .sheet .nom{text-align:center;margin:4px 0 8px}
-.sheet .nom span{display:inline-block;border:1.5px solid #5b2a86;color:#5b2a86;border-radius:20px;padding:0 16px;font-weight:800;font-size:10.5pt}
-.sheet .subj{background:#f4eefa;border-right:5px solid #5b2a86;border-radius:6px 0 0 6px;padding:5px 12px;font-weight:700;margin:7px 0}
+.sheet .nom span{display:inline-block;border:1.5px solid #5b2a86;background:#faf7ff;color:#5b2a86;border-radius:20px;padding:1px 18px;font-weight:800;font-size:10.5pt}
+.sheet .subj{background:#f4eefa;border-right:5px solid #5b2a86;border-radius:6px 0 0 6px;padding:6px 12px;font-weight:700;margin:7px 0}
 .sheet .subj small{color:#7b4aa8;font-weight:800;margin-left:6px}
+.sheet .emp-banner{background:linear-gradient(90deg,#f6f0fb,#fff);border:1px solid #dfd3ee;border-right:5px solid #5b2a86;border-radius:10px;padding:8px 14px;margin:6px 0;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.sheet .emp-banner .en{font-size:14pt;font-weight:800;color:#3d1a5c;line-height:1.3}
+.sheet .emp-banner .ej{font-size:9.5pt;color:#5d5868;font-weight:600}
+.sheet .emp-banner .eno{background:#5b2a86;color:#fff;border-radius:8px;padding:3px 12px;font-weight:800;font-size:10pt;white-space:nowrap}
 .sheet .addr{font-weight:800;font-size:12pt;margin:8px 0 1px;color:#3d1a5c}
 .sheet .greet{margin:2px 0 6px;color:#3d3a45}
 .sheet .txt{text-align:justify;margin:4px 0 6px}
@@ -653,11 +665,14 @@ function pR2(m,v){
 function pR3(m,v){
  const s=S.settings,list=(m.emps||[]).filter(e=>!e.r3off);
  const cellLv=x=>{x=num(x);return x?'<span class="red">'+leaveText(x)+'</span>':'لا يوجد';};
+ let ta=0,tc=0,ts=0;
  const rows=list.map((e,i)=>{
   const a=num(e.leave),c=num(e.leaveCas),sk=num(e.leaveSick),tot=a+c+sk;
+  ta+=a;tc+=c;ts+=sk;
   return '<tr><td>'+(i+1)+'</td><td class="num">'+esc(e.no)+'</td><td style="text-align:right;font-weight:700">'+esc(e.name)+'</td><td>'+esc(e.r3job||e.job)+'</td><td>'+cellLv(a)+'</td><td>'+cellLv(c)+'</td><td>'+cellLv(sk)+'</td><td>'+(tot?'<b class="red">'+leaveText(tot)+'</b>':'لا يوجد')+'</td></tr>';
  }).join('');
- const bodyTbl='<table class="t r3"><thead><tr><th rowspan="2" style="width:4%">م</th><th rowspan="2" style="width:9%">الرقم</th><th rowspan="2" style="width:26%">الاسم</th><th rowspan="2" style="width:21%">الوظيفة</th><th colspan="4">أيام الأجازات</th></tr><tr><th style="width:10%">اعتيادي</th><th style="width:10%">عارضة</th><th style="width:10%">مرضي</th><th style="width:10%">إجمالي</th></tr></thead><tbody>'+rows+'</tbody></table>';
+ const totRow=list.length?'<tr class="tot"><td colspan="4" style="text-align:right">الإجمالي ('+fmtInt(list.length)+' مستحق)</td><td>'+fmtInt(ta)+'</td><td>'+fmtInt(tc)+'</td><td>'+fmtInt(ts)+'</td><td>'+fmtInt(ta+tc+ts)+'</td></tr>':'';
+ const bodyTbl='<table class="t r3"><thead><tr><th rowspan="2" style="width:4%">م</th><th rowspan="2" style="width:9%">الرقم</th><th rowspan="2" style="width:26%">الاسم</th><th rowspan="2" style="width:21%">الوظيفة</th><th colspan="4">أيام الأجازات</th></tr><tr><th style="width:10%">اعتيادي</th><th style="width:10%">عارضة</th><th style="width:10%">مرضي</th><th style="width:10%">إجمالي</th></tr></thead><tbody>'+rows+totRow+'</tbody></table>';
  return letter(m,{subject:'بخصوص بيان المستحقين لمكافأة الحجز الإداري خلال شهر '+periodLabel(m.key),
   text:'بخصوص الموضوع بعاليه، نحيط علم سيادتكم أن أسماء المستحقين لمكافأة الحجز الإداري ب'+esc(s.dept)+' عن شهر '+periodLabel(m.key)+' كالتالي:',
   body:bodyTbl+'<div style="font-weight:700;margin-top:6px">برجاء التفضل بالعلم والإحاطة والتنبيه باللازم</div>',addr:2});
@@ -689,7 +704,10 @@ function pR5(m,v){
   +'<tr><td>'+n(L+'circL')+'</td><td>'+n(L+'circN')+'</td><td>'+n(L+'for')+'</td><td>'+n(L+'ag')+'</td><td>'+n(L+'jud')+'</td></tr>'
   +'</tbody></table>';
  const cv=b=>[n(b+'under'),n(b+'in'),n(b+'for'),n(b+'ag'),n(b+'tot'),n(b+'rem')];
- const civ=tbl(['','تحت اليد','الوارد','أحكام للصالح','أحكام للضد','إجمالي الأحكام','المتبقى'],[['من الشركة'].concat(cv('f2.civ.co.')),['ضد الشركة'].concat(cv('f2.civ.vs.')),['الإجمالي'].concat(cv('f2.civ.t.'))]);
+ const civ='<table class="t"><thead><tr><th></th><th>تحت اليد</th><th>الوارد</th><th>أحكام للصالح</th><th>أحكام للضد</th><th>إجمالي الأحكام</th><th>المتبقى</th></tr></thead><tbody>'
+  +'<tr><th class="rl">من الشركة</th>'+cv('f2.civ.co.').map(x=>'<td>'+x+'</td>').join('')+'</tr>'
+  +'<tr><th class="rl">ضد الشركة</th>'+cv('f2.civ.vs.').map(x=>'<td>'+x+'</td>').join('')+'</tr>'
+  +'<tr class="tot"><th class="rl">الإجمالي</th>'+cv('f2.civ.t.').map(x=>'<td>'+x+'</td>').join('')+'</tr></tbody></table>';
  const app=tbl(['تحت اليد','الوارد','المنتهى','المتبقى'],[[n('f2.app.under'),n('f2.app.in'),n('f2.app.fin'),n('f2.app.rem')]]);
  const cr=tbl(['تحت اليد','الوارد','أحكام للصالح','أحكام للضد','إجمالي الأحكام','المتبقى'],[['under','in','for','ag','tot','rem'].map(k=>n('f1.crim.'+k))]);
  const note=m.f1.note?'<div class="note"><b>ملحوظة:</b> '+esc(m.f1.note)+'</div>':'';
@@ -712,18 +730,24 @@ function pR7(m,v){
  return letter(m,{head,greet:'تحية طيبة، وبعد',text:'بخصوص الموضوع بعاليه، فيما يلي بيان القضايا المتداولة لصندوق الولاء والانتماء:',body:loyTable(m.loy.pend,LOY.pend,'لا توجد قضايا متداولة خلال شهر '+lab),close:'وتفضلوا بقبول وافر الاحترام والتقدير،'});
 }
 function pR8(m,v){
- const s=S.settings;
- const rows=(m.emps||[]).map((e,i)=>[i+1,esc(e.no),esc(e.name),esc(e.qual),esc(e.grp),esc(e.grade),esc(e.job),esc(e.syn)||'—',esc(e.synNo)||'—',e.jobAllow===''||e.jobAllow==null?'—':fmt(e.jobAllow),e.mgmtAllow===''||e.mgmtAllow==null?'—':fmt(e.mgmtAllow),leaveTotal(e)?'<b class="red">'+fmtInt(leaveTotal(e))+'</b>':'-']);
+ const s=S.settings,emps=m.emps||[];
+ let tJob=0,tMgmt=0,tLv=0;
+ const rows=emps.map((e,i)=>{
+  tJob+=num(e.jobAllow);tMgmt+=num(e.mgmtAllow);tLv+=leaveTotal(e);
+  return '<tr><td>'+(i+1)+'</td><td class="num">'+esc(e.no)+'</td><td style="text-align:right;font-weight:700">'+esc(e.name)+'</td><td>'+esc(e.qual)+'</td><td>'+esc(e.grp)+'</td><td>'+esc(e.grade)+'</td><td>'+esc(e.job)+'</td><td>'+(esc(e.syn)||'—')+'</td><td class="num">'+(esc(e.synNo)||'—')+'</td><td class="num">'+(e.jobAllow===''||e.jobAllow==null?'—':fmt(e.jobAllow))+'</td><td class="num">'+(e.mgmtAllow===''||e.mgmtAllow==null?'—':fmt(e.mgmtAllow))+'</td><td>'+(leaveTotal(e)?'<b class="red">'+fmtInt(leaveTotal(e))+'</b>':'-')+'</td></tr>';
+ }).join('');
+ const totRow=emps.length?'<tr class="tot"><td colspan="9" style="text-align:right">الإجمالي ('+fmtInt(emps.length)+' عامل)</td><td class="num">'+fmt(Math.round(tJob*100)/100)+'</td><td class="num">'+fmt(Math.round(tMgmt*100)/100)+'</td><td>'+fmtInt(tLv)+'</td></tr>':'';
+ const head=['م','رقم العامل','اسم العامل','المؤهل الدراسي','المجموعة الوظيفية','الدرجة','العمل القائم به','درجة القيد بالنقابة','رقم القيد بالنقابة','بدل الوظيفة','بدل الإدارة','الأجازات'];
  return '<section class="sheet land">'+lh(m)+'<div class="addr">'+esc(s.addr1)+'</div><div class="greet">تحية طيبة وبعد ،،،</div><div style="text-align:center;font-weight:800;font-size:13pt;margin:6px 0">بيان بأسماء جميع العاملين بفرع '+esc(s.branch)+' عن شهر <span class="pill">'+periodLabel(m.key)+'</span></div><div class="nom"><span>نموذج رقم (7)</span></div>'
-  +tbl(['م','رقم العامل','اسم العامل','المؤهل الدراسي','المجموعة الوظيفية','الدرجة','العمل القائم به','درجة القيد بالنقابة','رقم القيد بالنقابة','بدل الوظيفة','بدل الإدارة','الأجازات'],rows)+foot()+'</section>';
+  +'<table class="t"><thead><tr>'+head.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>'+rows+totRow+'</tbody></table>'+foot()+'</section>';
 }
 function pR0(m,v){
  const lab=periodLabel(m.key),k=kpis(m),ks=monthKeys().filter(x=>x<m.key),pk=ks[ks.length-1],p=pk?kpis(S.months[pk]):null;
- const ch=(a,b,mn)=>{if(!p)return '<em class="eq">لا يوجد شهر سابق</em>';const d=a-b;if(Math.abs(d)<0.005)return '<em class="eq">= بدون تغيير</em>';const r=b?' ('+fmt(Math.abs(d)/Math.abs(b)*100,1)+'%)':'';return '<em class="'+(d>0?'up':'dn')+'">'+(d>0?'▲ ':'▼ ')+(mn?fmt(Math.abs(d)):fmtInt(Math.abs(d)))+r+'</em>';};
- const T=[['💰 إجمالي المتحصلات','col',1],['🤝 قيمة المصالحات','settle',1],['📜 قيمة الأحكام المنفذة (متبقي)','exe',1],['📁 ملفات الحجز الإداري المتبقية','seiz'],['👷 القضايا العمالية المتبقية','lab'],['⚖️ القضايا المدنية المتبقية','civ']];
- let g='';for(let i=0;i<T.length;i+=3)g+='<tr>'+T.slice(i,i+3).map(([l,key,mn])=>'<td><span>'+l+'</span><b class="num">'+(mn?fmt(k[key]):fmtInt(k[key]))+'</b>'+ch(k[key],p?p[key]:0,mn)+'</td>').join('')+'</tr>';
+ const ch=(a,b,mn,inv)=>{if(!p)return '<em class="eq">لا يوجد شهر سابق</em>';const d=a-b;if(Math.abs(d)<0.005)return '<em class="eq">= بدون تغيير</em>';const good=inv?d<0:d>0;const r=b?' ('+fmt(Math.abs(d)/Math.abs(b)*100,1)+'%)':'';return '<em class="'+(good?'up':'dn')+'">'+(d>0?'▲ ':'▼ ')+(mn?fmt(Math.abs(d)):fmtInt(Math.abs(d)))+r+'</em>';};
+ const T=[['💰 إجمالي المتحصلات','col',1,0],['🤝 قيمة المصالحات','settle',1,0],['📜 قيمة الأحكام المنفذة (متبقي)','exe',1,1],['📁 ملفات الحجز الإداري المتبقية','seiz',0,1],['👷 القضايا العمالية المتبقية','lab',0,1],['⚖️ القضايا المدنية المتبقية','civ',0,1]];
+ let g='';for(let i=0;i<T.length;i+=3)g+='<tr>'+T.slice(i,i+3).map(([l,key,mn,inv])=>'<td><span>'+l+'</span><b class="num">'+(mn?fmt(k[key]):fmtInt(k[key]))+'</b>'+ch(k[key],p?p[key]:0,mn,inv)+'</td>').join('')+'</tr>';
  const R=[['ملفات النقض والإدارية العليا','cass'],['القضاء الجنائي','crim'],['التحقيقات','inv'],['الشكاوى والتظلمات','cmp'],['فتاوى ومتابعة','fat'],['العقود والتوثيق','con'],['الحجز الإداري','seiz'],['القضايا العمالية','lab'],['القضايا المدنية','civ']];
- const mk=arr=>tbl(['البيان','متبقي '+lab].concat(p?['متبقي '+periodLabel(pk),'التغير']:[]),arr.map(([l,key])=>['<b>'+l+'</b>','<span class="num">'+fmtInt(k[key])+'</span>'].concat(p?['<span class="num">'+fmtInt(p[key])+'</span>',ch(k[key],p[key])]:[])));
+ const mk=arr=>tbl(['البيان','متبقي '+lab].concat(p?['متبقي '+periodLabel(pk),'التغير']:[]),arr.map(([l,key])=>['<b>'+l+'</b>','<span class="num">'+fmtInt(k[key])+'</span>'].concat(p?['<span class="num">'+fmtInt(p[key])+'</span>',ch(k[key],p[key],0,1)]:[])));
  const cmp='<table class="two"><tr><td>'+mk(R.slice(0,5))+'</td><td>'+mk(R.slice(5))+'</td></tr></table>';
  const w=warnings(m);
  const al=w.length?w.map(x=>'<div class="alert '+x[0]+'">'+(x[0]==='bad'?'⛔ ':x[0]==='warn'?'⚠️ ':'ℹ️ ')+esc(x[1])+'</div>').join(''):'<div class="alert ok">✓ لا توجد ملاحظات على اتساق بيانات الشهر.</div>';
@@ -742,22 +766,60 @@ function pR10(m,v){
  const sum=(r,f)=>keys.reduce((a,k)=>a+(r.m[k]?r.m[k][f]:0),0);
  const rows=L.rows.map(r=>{const a=sum(r,'a'),c=sum(r,'c'),sk=sum(r,'s'),ded=a+(S.settings.casualCounts!==false?c:0),rem=r.quota-ded,srem=sq-sk;return [esc(r.name),fmtInt(r.quota),fmtInt(a),fmtInt(c),fmtInt(ded),'<b class="'+(rem<0?'red':'')+'">'+fmtInt(rem)+'</b>',fmtInt(num(S.settings.casualDays)-c),fmtInt(sk),fmtInt(srem)];});
  const col=i=>rows.reduce((x,r)=>x+num(String(r[i]).replace(/<[^>]*>/g,'').replace(/,/g,'')),0);
- const tot=['الإجمالي',fmtInt(col(1)),fmtInt(col(2)),fmtInt(col(3)),fmtInt(col(4)),fmtInt(col(5)),'',fmtInt(col(7)),''];
+ const head=['العامل','الاعتيادي المستحق','اعتيادي','عارضة','المخصوم','متبقي اعتيادي','عارضة متبقية','مرضي','متبقي مرضي (من '+fmtInt(sq)+')'];
+ const mainTbl='<table class="t"><thead><tr>'+head.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>'
+  +rows.map(r=>'<tr>'+r.map((x,i)=>i===0?'<td style="text-align:right;font-weight:700">'+x+'</td>':'<td>'+x+'</td>').join('')+'</tr>').join('')
+  +'<tr class="tot"><td style="text-align:right">الإجمالي</td><td>'+fmtInt(col(1))+'</td><td>'+fmtInt(col(2))+'</td><td>'+fmtInt(col(3))+'</td><td>'+fmtInt(col(4))+'</td><td>'+fmtInt(col(5))+'</td><td>—</td><td>'+fmtInt(col(7))+'</td><td>—</td></tr></tbody></table>';
  const mm=tbl(['الشهر','اعتيادي','عارضة','مرضي','الإجمالي'],keys.map(k=>{const es=S.months[k].emps||[],a=es.reduce((x,e)=>x+num(e.leave),0),c=es.reduce((x,e)=>x+num(e.leaveCas),0),sk=es.reduce((x,e)=>x+num(e.leaveSick),0);return [periodLabel(k),fmtInt(a),fmtInt(c),fmtInt(sk),'<b>'+fmtInt(a+c+sk)+'</b>'];}),'cp');
- return '<section class="sheet">'+lh(m)+'<div class="ttl">كشف أجازات العاملين ورصيدها السنوي – سنة '+y+'</div><div class="nom"><span>حتى '+periodLabel(m.key)+'</span></div>'+tbl(['العامل','الاعتيادي المستحق','اعتيادي','عارضة','المخصوم','متبقي اعتيادي','عارضة متبقية','مرضي','متبقي مرضي (من '+fmtInt(sq)+')'],rows.concat([tot]))+'<div class="bt">توزيع الأجازات على الشهور</div>'+mm+'<div class="note">الرصيد الاعتيادي السنوي يُحدَّد لكل موظف حسب مدة الخدمة والسن. المتبقي الاعتيادي = الرصيد المستحق − (اعتيادي'+(S.settings.casualCounts!==false?' + عارضة':'')+'). العارضة ثابتة ('+fmtInt(S.settings.casualDays)+' أيام سنوياً). المرضي افتراضياً 3 أشهر ('+fmtInt(sq)+' يوماً) لكل موظف ولا يخصم من الرصيد الاعتيادي.</div>'+sig()+'</section>';
+ return '<section class="sheet">'+lh(m)+'<div class="ttl">كشف أجازات العاملين ورصيدها السنوي – سنة '+y+'</div><div class="nom"><span>حتى '+periodLabel(m.key)+'</span></div>'+mainTbl+'<div class="bt">توزيع الأجازات على الشهور</div>'+mm+'<div class="note">الرصيد الاعتيادي السنوي يُحدَّد لكل موظف حسب مدة الخدمة والسن. المتبقي الاعتيادي = الرصيد المستحق − (اعتيادي'+(S.settings.casualCounts!==false?' + عارضة':'')+'). العارضة ثابتة ('+fmtInt(S.settings.casualDays)+' أيام سنوياً). المرضي افتراضياً 3 أشهر ('+fmtInt(sq)+' يوماً) لكل موظف ولا يخصم من الرصيد الاعتيادي.</div>'+sig()+'</section>';
+}
+function pR11(m,v){
+ const emps=m.emps||[];
+ if(!emps.length)return '<section class="sheet">'+lh(m,'<b>تقرير فردي</b>')+'<div class="ttl">التقرير الفردي للعامل</div><div class="note">لا يوجد عاملون مسجلون في هذا الشهر.</div>'+sig()+'</section>';
+ let idx=emps.findIndex(e=>(e.no||e.name)===S.ui.empRep);
+ if(idx<0)idx=0;
+ const e=emps[idx],y=yearOf(m.key),id=e.no||e.name;
+ const yKeys=monthKeys().filter(k=>yearOf(k)===y&&k<=m.key);
+ const u=ytdOf(m,e),q=quotaOf(e),rem=leaveRem(e,u),casMax=num(S.settings.casualDays)||7,casRem=casMax-u.c,sq=sickQuotaOf(),sRem=sq-u.s;
+ const totAllow=Math.round((num(e.jobAllow)+num(e.mgmtAllow))*100)/100;
+ const banner='<div class="emp-banner"><div><div class="en">'+esc(e.name||'—')+'</div><div class="ej">'+esc(e.job||'—')+(e.grade?' · الدرجة: '+esc(e.grade):'')+(e.grp?' · '+esc(e.grp):'')+'</div></div><div class="eno">رقم وظيفي: '+esc(e.no||'—')+'</div></div>';
+ const prof='<table class="t"><tbody>'
+  +'<tr><td class="kl">المؤهل الدراسي</td><td>'+esc(e.qual||'—')+'</td><td class="kl">المجموعة الوظيفية</td><td>'+esc(e.grp||'—')+'</td></tr>'
+  +'<tr><td class="kl">الدرجة الوظيفية</td><td>'+esc(e.grade||'—')+'</td><td class="kl">العمل القائم به</td><td>'+esc(e.job||'—')+'</td></tr>'
+  +'<tr><td class="kl">درجة القيد بالنقابة</td><td>'+esc(e.syn||'—')+'</td><td class="kl">رقم القيد بالنقابة</td><td class="num">'+esc(e.synNo||'—')+'</td></tr>'
+  +'<tr><td class="kl">مكافأة الحجز الإداري</td><td>'+(e.r3off?'<span class="tag n">مستبعد</span>':'<span class="tag">مستحق</span>')+(e.r3job?' ('+esc(e.r3job)+')':'')+'</td><td class="kl">الفرع / الإدارة</td><td>'+esc(S.settings.branch)+' – '+esc(S.settings.dept)+'</td></tr>'
+  +'</tbody></table>';
+ const allow='<table class="t"><thead><tr><th>بدل الوظيفة (جنيه)</th><th>بدل الإدارة (جنيه)</th><th>إجمالي البدلات الشهرية (جنيه)</th></tr></thead><tbody>'
+  +'<tr><td class="num">'+(e.jobAllow===''||e.jobAllow==null?'—':fmt(e.jobAllow))+'</td><td class="num">'+(e.mgmtAllow===''||e.mgmtAllow==null?'—':fmt(e.mgmtAllow))+'</td><td class="num"><b>'+fmt(totAllow)+'</b></td></tr>'
+  +'<tr class="tot"><td colspan="3">الإجمالي بالحروف: '+esc(moneyWords(totAllow))+'</td></tr></tbody></table>';
+ const kg='<table class="kg"><tr>'
+  +'<td><span>الرصيد الاعتيادي السنوي</span><b class="num">'+fmtInt(q)+' يوم</b><em class="eq">مستهلك اعتيادي: '+fmtInt(u.a)+' يوم</em></td>'
+  +'<td><span>المتبقي من الرصيد الاعتيادي</span><b class="num '+(rem<0?'red':'up')+'">'+fmtInt(rem)+' يوم</b><em class="eq">العارضة: '+fmtInt(u.c)+' / '+fmtInt(casMax)+' (متبقي '+fmtInt(casRem)+')</em></td>'
+  +'<td><span>الأجازات المرضية (سنة '+y+')</span><b class="num">'+fmtInt(u.s)+' يوم</b><em class="eq">متبقي من '+fmtInt(sq)+' يوم: '+fmtInt(sRem)+'</em></td>'
+  +'</tr></table>';
+ let ta=0,tc=0,ts=0;
+ const mRows=yKeys.map(k=>{
+  const x=(S.months[k].emps||[]).find(z=>(z.no||z.name)===id)||{};
+  const a=num(x.leave),c=num(x.leaveCas),sk=num(x.leaveSick),t=a+c+sk;
+  ta+=a;tc+=c;ts+=sk;
+  return '<tr><td style="text-align:right;font-weight:700">'+periodLabel(k)+'</td><td>'+(a?fmtInt(a):'—')+'</td><td>'+(c?fmtInt(c):'—')+'</td><td>'+(sk?fmtInt(sk):'—')+'</td><td><b>'+(t?fmtInt(t):'—')+'</b></td></tr>';
+ }).join('');
+ const lvTbl='<table class="t cp"><thead><tr><th>الشهر</th><th>اعتيادي</th><th>عارضة</th><th>مرضي</th><th>الإجمالي</th></tr></thead><tbody>'+mRows
+  +'<tr class="tot"><td style="text-align:right">الإجمالي التراكمي حتى '+periodLabel(m.key)+'</td><td>'+fmtInt(ta)+'</td><td>'+fmtInt(tc)+'</td><td>'+fmtInt(ts)+'</td><td>'+fmtInt(ta+tc+ts)+'</td></tr></tbody></table>';
+ return '<section class="sheet">'+lh(m,'<b>تقرير فردي</b>')+'<div class="ttl">التقرير الفردي للعامل – بيانات وبدلات وأجازات سنة '+y+'</div>'+banner+'<div class="bt">البيانات الوظيفية والنقابية</div>'+prof+'<div class="bt">البدلات المالية الشهرية</div>'+allow+'<div class="bt">ملخص رصيد الأجازات السنوي (حتى '+periodLabel(m.key)+')</div>'+kg+'<div class="bt">سجل الأجازات الشهري خلال سنة '+y+'</div>'+lvTbl+sig()+'</section>';
 }
 const REPORTS=[
  ['r0','الملخص التنفيذي للشهر',pR0],['r1','متحصلات قسم تنفيذ الأحكام والمديونيات',pR1],['r2','بيان المبالغ الخاصة بالأحكام والمصالحات',pR2],['r3','مستحقو مكافأة الحجز الإداري',pR3],
  ['r4','نموذج رقم 1 – بيان أعمال الإدارة',pR4],['r5','نموذج رقم 2 – بيان أعمال الإدارة',pR5],['r6','أحكام صندوق الولاء والانتماء',pR6],
  ['r7','قضايا صندوق الولاء المتداولة',pR7],['r8','نموذج رقم 7 – بيان العاملين',pR8],
- ['r9','الإجماليات التراكمية للسنة (إضافي)',pR9],['r10','كشف الأجازات ورصيدها السنوي (إضافي)',pR10]
+ ['r9','الإجماليات التراكمية للسنة (إضافي)',pR9],['r10','كشف الأجازات ورصيدها السنوي (إضافي)',pR10],['r11','التقرير الفردي للعامل (فردي)',pR11]
 ];
 /* اتجاه كل ورقة: افتراضياً نموذج 7 أفقي وباقي التقارير رأسية، ويمكن تغييره من شاشة الطباعة */
 const DEF_LAND=['r8'];
 function orientOf(id){const o=S.ui.orient&&S.ui.orient[id];return o||(DEF_LAND.includes(id)?'land':'port');}
-function selReports(){return REPORTS.filter(r=>S.ui.sel.includes(r[0]));}
-function pagesHtml(m){
- const v=ctx(m),rs=selReports(),n=rs.length,s=S.settings;
+function selReports(onlyId){if(onlyId){const r=REPORTS.find(x=>x[0]===onlyId);return r?[r]:[];}return REPORTS.filter(r=>S.ui.sel.includes(r[0]));}
+function pagesHtml(m,onlyId){
+ const v=ctx(m),rs=selReports(onlyId),n=rs.length,s=S.settings;
  return rs.map((r,i)=>{let h=r[2](m,v);
   h=h.replace(/^<section class="([^"]*)">/,(x,c)=>{c=c.replace(/\s*\bland\b/g,'');return '<section class="'+c+(orientOf(r[0])==='land'?' land':'')+'" data-rid="'+r[0]+'">';});
   const mt=h.match(/^<section class="([^"]*)"[^>]*>/);
@@ -769,7 +831,7 @@ function arDigits(root){
  const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let n;const map='٠١٢٣٤٥٦٧٨٩';
  while((n=w.nextNode())){if(/[0-9]/.test(n.nodeValue))n.nodeValue=n.nodeValue.replace(/[0-9]/g,d=>map[d]);}
 }
-function pagesDOM(m){const d=document.createElement('div');d.innerHTML=pagesHtml(m);if(S.settings.digits==='ar')arDigits(d);return d;}
+function pagesDOM(m,onlyId){const d=document.createElement('div');d.innerHTML=pagesHtml(m,onlyId);if(S.settings.digits==='ar')arDigits(d);return d;}
 function drawPages(){
  const el=$('#pages');if(!el)return;
  const d=pagesDOM(M());el.innerHTML=d.innerHTML;fillPages();fitPages();
@@ -951,7 +1013,7 @@ function leaveRem(e,u){const ded=u.a+(S.settings.casualCounts!==false?u.c:0);ret
 function vEmpLeaves(m){
  const arr=m.emps;if(!arr.length)return '<div class="card"><p class="mut">لا يوجد عاملون في هذا الشهر. أضفهم من «بيانات العاملين».</p></div>';
  const fBar=arr.length>2?'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><input type="search" class="t-filter" placeholder="🔍 بحث عن موظف (بالاسم أو الوظيفة)..." oninput="filterTableRows(this)" style="max-width:280px;padding:5px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px"><span class="filter-count mut" style="font-size:12px"></span></div>':'';
- const rows=arr.map((e,i)=>'<tr><td>'+(i+1)+'</td><td class="rl nm"><b>'+esc(e.name||'—')+'</b><small>'+esc(e.job||'')+' · اعتيادي مستحق: <b>'+fmtInt(quotaOf(e))+'</b> يوم</small></td>'+LEAVE_TYPES.map(t=>'<td class="lc lt-'+t.cls+'">'+inp('emps.'+i+'.'+t.k,{t:'number',ph:'0'})+'</td>').join('')+'<td><output class="tot" data-lt="'+i+'">'+fmtInt(leaveTotal(e))+'</output></td><td><span class="pill2" data-ly="'+i+'"></span></td><td><span class="pill2" data-ls="'+i+'"></span></td></tr>').join('');
+ const rows=arr.map((e,i)=>'<tr><td>'+(i+1)+'</td><td class="rl nm"><b>'+esc(e.name||'—')+'</b><small>'+esc(e.job||'')+' · اعتيادي مستحق: <b>'+fmtInt(quotaOf(e))+'</b> يوم <button type="button" class="rbtn pri" style="margin-right:4px" data-act="emprep:'+i+'" title="فتح التقرير الفردي لهذا العامل">👤 تقرير فردي</button></small></td>'+LEAVE_TYPES.map(t=>'<td class="lc lt-'+t.cls+'">'+inp('emps.'+i+'.'+t.k,{t:'number',ph:'0'})+'</td>').join('')+'<td><output class="tot" data-lt="'+i+'">'+fmtInt(leaveTotal(e))+'</output></td><td><span class="pill2" data-ly="'+i+'"></span></td><td><span class="pill2" data-ls="'+i+'"></span></td></tr>').join('');
  return '<div class="card"><h3>🏖️ أجازات '+periodLabel(m.key)+' <span class="mut" style="font-weight:600;font-size:12.5px">أيام كل نوع خلال الشهر</span></h3>'
  +fBar
  +'<div class="tw"><table class="et lvin" style="min-width:720px"><thead><tr><th>م</th><th class="rl">العامل</th>'+LEAVE_TYPES.map(t=>'<th class="lt-'+t.cls+'">'+t.label+'</th>').join('')+'<th>الإجمالي</th><th>متبقي اعتيادي</th><th>متبقي مرضي (من 3 أشهر)</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
@@ -969,7 +1031,7 @@ function refreshLeaves(){
 function vEmpCards(m){
  const arr=m.emps;
  const fBar=arr.length>2?'<div class="card noprint" style="margin-bottom:12px;padding:10px 14px"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><input type="search" class="t-filter" placeholder="🔍 بحث في بطاقات العاملين (بالاسم، الرقم، الوظيفة، الدرجة)..." oninput="filterCardList(this, \'.ecard\')" style="flex:1;max-width:360px;padding:6px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px"><span class="filter-count mut" style="font-size:12.5px"></span></div></div>':'';
- const card=(e,i)=>'<div class="ecard"><div class="eh"><div><b>'+esc(e.name||'عامل جديد')+'</b><small>'+esc(e.job||'')+(e.no?' · '+esc(e.no):'')+'</small></div><button class="btn sm bad" data-act="delemp:'+i+'">حذف</button></div>'
+ const card=(e,i)=>'<div class="ecard"><div class="eh"><div><b>'+esc(e.name||'عامل جديد')+'</b><small>'+esc(e.job||'')+(e.no?' · '+esc(e.no):'')+'</small></div><div style="display:flex;gap:6px"><button class="btn sm" data-act="emprep:'+i+'" title="معاينة وطباعة التقرير الفردي">👤 تقرير فردي</button><button class="btn sm bad" data-act="delemp:'+i+'">حذف</button></div></div>'
   +'<div class="eg">'+fl('اسم العامل','emps.'+i+'.name','text','w2')+fl('الرقم الوظيفي','emps.'+i+'.no','text')+fl('العمل القائم به','emps.'+i+'.job','text','w2')
   +fl('المؤهل الدراسي','emps.'+i+'.qual','text')+fl('المجموعة الوظيفية','emps.'+i+'.grp','text')+fl('الدرجة','emps.'+i+'.grade','text')
   +fl('درجة القيد بالنقابة','emps.'+i+'.syn','text')+fl('رقم القيد بالنقابة','emps.'+i+'.synNo','text')
@@ -1220,14 +1282,21 @@ function vLog(m){
  +keys.slice().reverse().map(x=>{const q=kpis(S.months[x]);return '<tr><td><b>'+periodLabel(x)+'</b>'+(x===keys[0]?' <span class="tag">شهر الأساس</span>':'')+(S.months[x].holdChain?' <span class="tag u">بانتظار الترحيل</span>':'')+'</td><td>'+fmt(q.col)+'</td><td>'+fmt(q.settle)+' ('+fmtInt(q.settleN)+')</td><td>'+fmtInt(q.seiz)+'</td><td>'+fmtInt(q.lab)+'</td><td>'+fmtInt(q.civ)+'</td><td>'+new Date(S.months[x].updatedAt).toLocaleDateString('en-GB')+'</td><td><button class="btn sm" data-act="openmonth:'+x+'">فتح</button> <button class="btn sm bad" data-act="delmonth:'+x+'">حذف</button></td></tr>';}).join('')+'</tbody></table></div></div>';
 }
 function vPrn(m){
- const s=S.settings;
+ const s=S.settings,emps=m.emps||[];
  const rs=selReports(),last=rs.length?rs[rs.length-1]:null,lastLand=last&&orientOf(last[0])==='land';
  const ori=id=>{const l=orientOf(id)==='land';return '<button type="button" class="ori'+(l?' on':'')+'" data-act="orient:'+id+'" title="تغيير اتجاه الورقة">'+(l?'↔ أفقي':'↕ رأسي')+'</button>';};
- return '<div class="card noprint"><h3>التقارير المطلوبة لشهر '+periodLabel(m.key)+'</h3><div class="sel">'+REPORTS.map(([id,t])=>'<span class="ri"><label class="chk"><input type="checkbox" data-sel="'+id+'"'+(S.ui.sel.includes(id)?' checked':'')+'> '+t+'</label>'+ori(id)+'</span>').join('')+'</div>'
+ const curEmp=S.ui.empRep||(emps[0]?(emps[0].no||emps[0].name):'');
+ const empOpts=emps.map(e=>{const id=e.no||e.name;return '<option value="'+esc(id)+'"'+(id===curEmp?' selected':'')+'>'+esc(e.name||'—')+(e.no?' ('+esc(e.no)+')':'')+'</option>';}).join('');
+ const indBar=emps.length
+  ?'<div class="ind-box"><label>👤 التقرير الفردي للعامل:<select data-ui="empRep">'+empOpts+'</select></label><button type="button" class="btn sm pri" data-act="solo:r11">👁️ معاينة فردي</button><button type="button" class="btn sm" data-act="printone:r11">🖨️ طباعة فردي</button><button type="button" class="btn sm" data-act="wordone:r11">📄 Word فردي</button></div>'
+  :'';
+ return '<div class="card noprint"><h3><span>التقارير المطلوبة لشهر '+periodLabel(m.key)+'</span><span style="display:inline-flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn sm" data-act="selcore">التقارير الأساسية</button><button type="button" class="btn sm" data-act="selall">تحديد الكل</button><button type="button" class="btn sm" data-act="selnone">إلغاء الكل</button></span></h3>'
+  +'<div class="sel">'+REPORTS.map(([id,t])=>'<span class="ri"><label class="chk"><input type="checkbox" data-sel="'+id+'"'+(S.ui.sel.includes(id)?' checked':'')+'> '+t+'</label>'+ori(id)+'<button type="button" class="rbtn pri" data-act="solo:'+id+'" title="معاينة هذا التقرير منفرداً">👁️</button><button type="button" class="rbtn" data-act="printone:'+id+'" title="طباعة هذا التقرير فقط">🖨️</button><button type="button" class="rbtn" data-act="wordone:'+id+'" title="تصدير هذا التقرير فقط إلى Word">📄</button></span>').join('')+'</div>'
+  +indBar
   +(last?'<div class="opts"><button class="btn sm'+(lastLand?' pri':'')+'" data-act="lastland">'+(lastLand?'✓ الورقة الأخيرة أفقية – إعادتها رأسية':'↔ طباعة الورقة الأخيرة أفقياً')+'</button><span class="mut" style="font-size:12.5px">الورقة الأخيرة حالياً: <b>'+esc(last[1])+'</b> ('+(lastLand?'أفقي':'رأسي')+')</span></div>':'')
   +'<div class="warn bad" id="ovfw" hidden></div>'
   +'<div class="opts"><label class="chk"><input type="checkbox" data-s="hideNone" data-rr'+(s.hideNone?' checked':'')+'> إخفاء بنود «لا يوجد» من بيان الأحكام</label><label class="chk"><input type="checkbox" data-s="hideZero" data-rr'+(s.hideZero?' checked':'')+'> إخفاء البنود الصفرية (المتحصلات والنماذج)</label><label class="chk">الأرقام: <select data-s="digits" data-rr style="width:auto"><option value="latin"'+(s.digits==='latin'?' selected':'')+'>1 2 3</option><option value="ar"'+(s.digits==='ar'?' selected':'')+'>١ ٢ ٣</option></select></label></div>'
-  +'<div class="btns"><button class="btn pri" data-act="print">🖨️ طباعة / حفظ PDF</button><button class="btn" data-act="word">📄 تصدير Word</button><button class="btn" data-act="xlsx">📊 تصدير Excel (كل الشهور)</button><button class="btn" data-act="json">💾 نسخة احتياطية JSON</button></div></div><div class="pages" id="pages"></div>';
+  +'<div class="btns"><button class="btn pri" data-act="print">🖨️ طباعة / حفظ PDF ('+rs.length+')</button><button class="btn" data-act="word">📄 تصدير Word</button><button class="btn" data-act="xlsx">📊 تصدير Excel (كل الشهور)</button><button class="btn" data-act="json">💾 نسخة احتياطية JSON</button></div></div><div class="pages" id="pages"></div>';
 }
 function refreshCalc(){
  const m=M();if(!m)return;const v=ctx(m);
@@ -1361,6 +1430,27 @@ const ACT={
   if(S.ui.tab!=='prn'){S.ui.tab='prn';save();renderSide();renderHdr();renderView();}
   const go=()=>{drawPages();requestAnimationFrame(()=>requestAnimationFrame(()=>window.print()));};
   (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(go,go);
+ },
+ selall(){S.ui.sel=REPORTS.map(r=>r[0]);save();renderView();},
+ selcore(){S.ui.sel=['r0','r1','r2','r3','r4','r5','r6','r7','r8'];save();renderView();},
+ selnone(){S.ui.sel=[];save();renderView();},
+ solo(id){S.ui.sel=[id];S.ui.tab='prn';save();renderSide();renderHdr();renderView();},
+ printone(id){
+  if(!M())return;
+  const prevSel=S.ui.sel.slice();
+  S.ui.sel=[id];
+  if(S.ui.tab!=='prn'){S.ui.tab='prn';renderSide();renderHdr();renderView();}else{renderView();}
+  const restore=()=>{S.ui.sel=prevSel;save();if(S.ui.tab==='prn')renderView();window.removeEventListener('afterprint',restore);};
+  window.addEventListener('afterprint',restore);
+  const go=()=>{drawPages();requestAnimationFrame(()=>requestAnimationFrame(()=>window.print()));};
+  (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(go,go);
+ },
+ wordone(id){exportWord(id);},
+ emprep(idx){
+  const m=M();if(!m)return;
+  const e=(m.emps||[])[+idx];if(!e)return;
+  S.ui.empRep=e.no||e.name;
+  S.ui.sel=['r11'];S.ui.tab='prn';save();renderSide();renderHdr();renderView();
  },
  orient(id){S.ui.orient=S.ui.orient||{};S.ui.orient[id]=orientOf(id)==='land'?'port':'land';save();renderView();},
  lastland(){const rs=selReports();if(!rs.length)return toast('اختر تقريراً واحداً على الأقل');ACT.orient(rs[rs.length-1][0]);},
@@ -1712,9 +1802,10 @@ async function syncNow(manual){
 /* ============ التصدير ============ */
 function download(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);}
 function exportJson(){download(new Blob([JSON.stringify(exportObj(),null,1)],{type:'application/json'}),'legal-monthly-backup-'+new Date().toISOString().slice(0,10)+'.json');}
-function exportWord(){
+function exportWord(onlyId){
  const m=M();if(!m)return;
- const d=pagesDOM(m);
+ const d=pagesDOM(m,onlyId);
+ if(!d.children.length)return toast('اختر تقريراً واحداً على الأقل');
  /* كل مجموعة أوراق متتالية بنفس الاتجاه = قسم مستقل في Word (رأسي أو أفقي) */
  let body='',cur=null;
  [...d.children].forEach(sh=>{const o=sh.classList.contains('land')?'L':'P';
@@ -1723,7 +1814,15 @@ function exportWord(){
  if(cur)body+='</div>';
  const css=$('#sheetcss').textContent.replace(/@page[^{]*\{[^}]*\}/g,'').replace(/@media print\{[\s\S]*$/,'');
  const html='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" dir="rtl"><head><meta charset="utf-8"><style>@page SecP{size:21cm 29.7cm;mso-page-orientation:portrait;margin:1cm}@page SecL{size:29.7cm 21cm;mso-page-orientation:landscape;margin:1cm}div.SecP{page:SecP}div.SecL{page:SecL}body{direction:rtl}'+css+'.sheet,.sheet.land{width:auto;min-height:0;box-shadow:none}</style></head><body dir="rtl">'+body+'</body></html>';
- download(new Blob(['\ufeff',html],{type:'application/msword'}),'تقارير-'+m.key+'.doc');
+ let fname='تقارير-'+m.key;
+ if(onlyId){
+  const rep=REPORTS.find(r=>r[0]===onlyId);
+  if(onlyId==='r11'){
+   const emps=m.emps||[],e=emps.find(x=>(x.no||x.name)===S.ui.empRep)||emps[0];
+   fname='تقرير-فردي-'+(e&&e.name?e.name.replace(/[\\/:*?"<>|]/g,'-'):'عامل')+'-'+m.key;
+  }else if(rep){fname=rep[1].replace(/[\\/:*?"<>|]/g,'-')+'-'+m.key;}
+ }
+ download(new Blob(['\ufeff',html],{type:'application/msword'}),fname+'.doc');
 }
 function loadScript(u){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=u;s.onload=res;s.onerror=rej;document.head.appendChild(s);});}
 function exportData(){
