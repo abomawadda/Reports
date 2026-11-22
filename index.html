@@ -44,12 +44,28 @@ aside{background:#fff;border-radius:14px;padding:12px;box-shadow:0 1px 6px #0001
 .fld span{font-size:13px;color:var(--mut)}.fld em{color:var(--bad);font-style:normal;font-size:12px}
 input[type=text],input[type=number],input[type=date],input[type=month],input[type=url],input[type=password],select,textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink)}
 input:focus,select:focus,textarea:focus{outline:2px solid var(--p2);border-color:var(--p2)}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+input[type=number]{-moz-appearance:textfield;appearance:textfield}
+.num-wrap{display:flex;align-items:stretch;width:100%;border:1px solid var(--line);border-radius:9px;background:#fff;overflow:hidden;transition:border-color .15s,box-shadow .15s}
+.num-wrap:focus-within{border-color:var(--p2);box-shadow:0 0 0 2px #7b4aa833}
+.num-wrap input{border:none!important;border-radius:0!important;outline:none!important;box-shadow:none!important;min-width:0!important;flex:1;background:transparent!important;padding:6px 4px;text-align:center}
+.num-wrap.base-wrap{border:2px solid #bba3d9;background:#faf7ff}
+.nbtn{flex:0 0 26px;border:none;background:#f5f2f9;color:var(--p);font-size:15px;font-weight:800;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;user-select:none;transition:background .15s,color .15s}
+.nbtn:hover{background:var(--p);color:#fff}
+.nbtn:active{transform:scale(.92)}
+.nbtn[data-step="1"]{border-left:1px solid var(--line)}
+.nbtn[data-step="-1"]{border-right:1px solid var(--line)}
+.et .num-wrap{min-width:108px}
+.et .nbtn{flex:0 0 22px;font-size:13px}
 input.calc{background:#f7f4fb;color:var(--p)}input.calc.ov{background:#fff4d6;border-color:var(--warn)}
 input.carried{background:#f3edf9!important;color:#5b2a86!important;font-weight:700;border:1px solid #d4c4e8!important;cursor:default}
 input.base-under{border:2px solid #bba3d9!important;background:#faf7ff!important}
-.carry-banner{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;margin-bottom:14px;font-size:13px;font-weight:600}
+.carry-banner{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:10px 14px;border-radius:10px;margin-bottom:14px;font-size:13px;font-weight:600}
 .carry-banner.base{background:#fef7e7;color:#925400;border:1px solid #ffe1a6}
 .carry-banner.chain{background:#f4edf9;color:#5b2a86;border:1px solid #dcc8f1}
+.carry-banner.hold{background:#fff4e5;color:#9a4d00;border:1px solid #ffd29d}
+.cf .num-wrap{border-color:var(--c);border-width:2px}
+.cf .num-wrap input{font-size:16px;font-weight:700;padding:8px 6px}
 .cf input{border-color:var(--c);border-width:2px;font-size:16px;font-weight:700}
 .total{margin-top:14px;background:var(--pl);border-radius:12px;padding:12px 16px}
 .total b{font-size:22px;color:var(--p);margin-right:10px}.words{color:var(--mut);margin-top:4px}
@@ -543,18 +559,24 @@ function voText(m,k,v){
  if(mode==='amount')return esc(moneyWords(amt))+' <span class="sm">('+fmt(amt)+')</span>';
  return mode==='unest'?'<span class="tag u">غير مقدرة القيمة</span>':'<span class="tag n">لا يوجد</span>';
 }
+const isContiguous=(a,b)=>!!a&&nextKey(a)===b;
 function warnings(m){
  const w=[];const v=ctx(m);
  if(!v('col.total'))w.push(['info','لم يتم إدخال متحصلات هذا الشهر بعد.']);
  const o=getP(m,'f1.seiz.coll');
  if(o!==undefined&&o!==''&&Math.abs(num(o)-v.C['col.total'])>0.005)w.push(['warn','المبلغ المحصل في ملفات الحجز الإداري ('+fmt(o)+') لا يطابق إجمالي المتحصلات ('+fmt(v.C['col.total'])+').']);
  Object.keys(v.C).forEach(p=>{if(PL[p]&&/rem$/.test(p)&&v(p)<0)w.push(['bad','قيمة سالبة في: '+PL[p]]);});
+ if(m.holdChain)w.push(['warn','هذا الشهر أُضيف أقدم من شهور موجودة ولم يُعتمد ترحيل أرصدته للشهور اللاحقة بعد.']);
  const ks=monthKeys().filter(k=>k<m.key),pk=ks[ks.length-1];
  if(!pk)w.push(['info','هذا أقدم شهر مسجل فهو «شهر الأساس»: أرصدته الافتتاحية (تحت اليد) تُدخل يدوياً من التقرير الأصلي، وتُرحَّل منه الشهور اللاحقة.']);
  if(pk){
-  const pv=ctx(S.months[pk]);const bad=CARRY.filter(([t,s])=>Math.abs(v(t)-pv(s))>0.005).map(([t])=>PL[t]);
-  if(bad.length)w.push(['warn','الرصيد الافتتاحي (تحت اليد) لا يطابق متبقي '+periodLabel(pk)+' في: '+bad.slice(0,4).join('، ')+(bad.length>4?' …':'')]);
-  if(nextKey(pk)!==m.key)w.push(['info','يوجد فاصل زمني بين هذا الشهر وآخر شهر مسجل قبله ('+periodLabel(pk)+').']);
+  const gap=!isContiguous(pk,m.key),held=!!(S.months[pk]&&S.months[pk].holdChain);
+  if(gap)w.push(['info','يوجد فاصل زمني بين هذا الشهر وآخر شهر مسجل قبله ('+periodLabel(pk)+')؛ لذا أرصدة «تحت اليد» هنا مستقلة ومفتوحة للإدخال اليدوي.']);
+  else if(held)w.push(['info','شهر '+periodLabel(pk)+' قيد الإدخال؛ تم الإبقاء على أرصدة «تحت اليد» الحالية لحين اعتماد الترحيل.']);
+  else{
+   const pv=ctx(S.months[pk]);const bad=CARRY.filter(([t,s])=>Math.abs(v(t)-pv(s))>0.005).map(([t])=>PL[t]);
+   if(bad.length)w.push(['warn','الرصيد الافتتاحي (تحت اليد) لا يطابق متبقي '+periodLabel(pk)+' في: '+bad.slice(0,4).join('، ')+(bad.length>4?' …':'')]);
+  }
  }
  return w;
 }
@@ -783,21 +805,30 @@ function fitPages(){
 }
 
 /* ============ واجهات الإدخال ============ */
+function numWrap(inputHtml,wrapCls){
+ return '<div class="num-wrap'+(wrapCls?' '+wrapCls:'')+'"><button type="button" class="nbtn" data-step="1" tabindex="-1" title="زيادة" aria-label="زيادة">+</button>'+inputHtml+'<button type="button" class="nbtn" data-step="-1" tabindex="-1" title="نقصان" aria-label="نقصان">−</button></div>';
+}
 function inp(p,o){o=o||{};const t=o.t||'number';const v=getP(M(),p);
- return '<input data-p="'+p+'" '+(o.calc?'data-calc ':'')+'type="'+t+'" '+(t==='number'?'step="any" inputmode="decimal" ':'')+'value="'+esc(v==null?'':v)+'" '+(o.ph?'placeholder="'+esc(o.ph)+'" ':'')+(o.cls?'class="'+o.cls+'"':'')+'>';}
+ const h='<input data-p="'+p+'" '+(o.calc?'data-calc ':'')+'type="'+t+'" '+(t==='number'?'step="any" inputmode="decimal" ':'')+'value="'+esc(v==null?'':v)+'" '+(o.ph?'placeholder="'+esc(o.ph)+'" ':'')+(o.cls?'class="'+o.cls+'" ':'')+(o.ro?'readonly tabindex="-1" ':'')+(o.title?'title="'+esc(o.title)+'" ':'')+'>';
+ if(t==='number'&&!o.ro&&!o.calc&&!o.noStep)return numWrap(h,o.wrapCls);
+ return h;
+}
 function cell(base,sp){
  const [k,ty='']=sp.split(':');const p=base+'.'+k;
  if(ty==='o')return '<td><output data-o="'+p+'"></output></td>';
- if(ty==='c'||ty==='c$')return '<td>'+inp(p,{calc:1,cls:'calc',ph:'تلقائي'}).replace('<input ','<input title="محسوب تلقائياً – اكتب قيمة لتجاوزه، وامسحها للعودة للحساب" ')+'</td>';
+ if(ty==='c'||ty==='c$')return '<td>'+inp(p,{calc:1,cls:'calc',ph:'تلقائي',title:'محسوب تلقائياً – اكتب قيمة لتجاوزه، وامسحها للعودة للحساب'})+'</td>';
  const isCarry=CARRY.some(([t])=>t===p);
  if(isCarry){
-  const ks=monthKeys(),isBase=!ks.length||(M()&&ks[0]===M().key);
-  if(isBase){
-   return '<td>'+inp(p,{ph:ty==='$'?'0.00':'0',cls:'base-under'}).replace('<input ','<input title="الرصيد الافتتاحي لشهر الأساس – يُدخل يدوياً وتُرحَّل منه الشهور اللاحقة" ')+'</td>';
-  }else{
-   const pk=ks[ks.indexOf(M().key)-1];
-   return '<td>'+inp(p,{ph:ty==='$'?'0.00':'0',cls:'calc carried'}).replace('<input ','<input readonly tabindex="-1" title="مرحّل تلقائياً من متبقي شهر '+(pk?periodLabel(pk):'السابق')+'" ')+'</td>';
+  const ks=monthKeys(),cur=M(),idx=cur?ks.indexOf(cur.key):-1,pk=idx>0?ks[idx-1]:null;
+  const prevM=pk?S.months[pk]:null;
+  const autoCarried=!!pk&&isContiguous(pk,cur.key)&&!(prevM&&prevM.holdChain);
+  if(autoCarried){
+   return '<td>'+inp(p,{ph:ty==='$'?'0.00':'0',cls:'calc carried',ro:1,title:'مرحّل تلقائياً من متبقي شهر '+periodLabel(pk)})+'</td>';
   }
+  const tip=idx===0?'الرصيد الافتتاحي لشهر الأساس – يُدخل يدوياً وتُرحَّل منه الشهور اللاحقة'
+   :(pk&&!isContiguous(pk,cur.key)?'مفتوح للإدخال اليدوي لوجود فاصل زمني بعد شهر '+periodLabel(pk)
+   :'مفتوح مؤقتاً لحين اعتماد ترحيل شهر '+periodLabel(pk));
+  return '<td>'+inp(p,{ph:ty==='$'?'0.00':'0',cls:'base-under',wrapCls:'base-wrap',title:tip})+'</td>';
  }
  return '<td>'+inp(p,{ph:ty==='$'?'0.00':'0'})+'</td>';
 }
@@ -812,24 +843,34 @@ function voEd(m,k,l){
  const j=(m.jud&&m.jud[k])||{};const auto=k==='settle';
  const mode=j.mode===undefined?(auto?'':'none'):j.mode;
  const opts=(auto?[['','تلقائي (من نموذج 1)']]:[]).concat([['amount','مبلغ'],['unest','غير مقدرة القيمة'],['none','لا يوجد'],['hide','عدم الإدراج في التقرير']]);
- return '<div class="vo"><span class="vl">'+l+'</span><select data-p="jud.'+k+'.mode" data-vo>'+opts.map(([a,b])=>'<option value="'+a+'"'+(a===mode?' selected':'')+'>'+b+'</option>').join('')+'</select><input data-p="jud.'+k+'.amount" type="number" step="any" placeholder="المبلغ بالجنيه" value="'+esc(j.amount==null?'':j.amount)+'"'+(mode==='amount'?'':' hidden')+'></div>';
+ return '<div class="vo"><span class="vl">'+l+'</span><select data-p="jud.'+k+'.mode" data-vo>'+opts.map(([a,b])=>'<option value="'+a+'"'+(a===mode?' selected':'')+'>'+b+'</option>').join('')+'</select><div class="num-wrap"'+(mode==='amount'?'':' hidden')+'><button type="button" class="nbtn" data-step="1" tabindex="-1" title="زيادة" aria-label="زيادة">+</button><input data-p="jud.'+k+'.amount" type="number" step="any" placeholder="المبلغ بالجنيه" value="'+esc(j.amount==null?'':j.amount)+'"><button type="button" class="nbtn" data-step="-1" tabindex="-1" title="نقصان" aria-label="نقصان">−</button></div></div>';
 }
 function vJud(m){
  return '<p class="mut">اختر لكل بند: مبلغ، أو «غير مقدرة القيمة»، أو «لا يوجد»، أو «عدم الإدراج» لإخفاء البند من التقرير. المصالحات تُسحب تلقائياً من نموذج 1.</p>'+JUD.map(([t,its])=>'<div class="card"><h3>'+t+'</h3>'+its.map(([k,l])=>voEd(m,k,l)).join('')+'</div>').join('');
 }
+function carryBanner(m){
+ const ks=monthKeys(),idx=ks.indexOf(m.key),pk=idx>0?ks[idx-1]:null,nk=idx>=0&&idx<ks.length-1?ks[idx+1]:null;
+ const prevM=pk?S.months[pk]:null;
+ if(m.holdChain){
+  const targetNote=nk&&isContiguous(m.key,nk)?'إلى '+periodLabel(nk)+' وما بعده':'إلى الشهور اللاحقة المتصلة';
+  return '<div class="carry-banner hold"><span>⏳ <b>شهر أقدم قيد الإدخال ('+periodLabel(m.key)+'):</b> لم يتم تعديل أرصدة الشهور اللاحقة لحماية بياناتك. بعد استكمال بيانات هذا الشهر اضغط الزر لاعتماد الترحيل '+targetNote+'.</span><button class="btn sm pri" data-act="applychain:'+m.key+'">🔗 اعتماد وترحيل الأرصدة الآن</button></div>';
+ }
+ if(idx===0){
+  return '<div class="carry-banner base"><span>⭐ <b>شهر الأساس الافتتاحي ('+periodLabel(m.key)+'):</b> أرصدة «تحت اليد» تُدخل هنا يدوياً وتعتبر الأساس لترحيل الشهور اللاحقة المتصلة.</span></div>';
+ }
+ if(!isContiguous(pk,m.key)){
+  return '<div class="carry-banner hold"><span>⚠️ <b>فاصل زمني بعد '+periodLabel(pk)+':</b> لعدم تسجيل شهر '+periodLabel(nextKey(pk))+'، تبقى خانات «تحت اليد» في هذا الشهر مفتوحة للإدخال اليدوي دون ترحيل تلقائي عبر الفجوة.</span></div>';
+ }
+ if(prevM&&prevM.holdChain){
+  return '<div class="carry-banner hold"><span>⏳ <b>بانتظار اعتماد شهر '+periodLabel(pk)+':</b> تم الإبقاء على أرصدة «تحت اليد» الحالية كما هي لحماية البيانات حتى تنتهي من إدخال '+periodLabel(pk)+'.</span><button class="btn sm pri" data-act="applychain:'+pk+'">🔗 اعتماد وترحيل من '+periodLabel(pk)+'</button></div>';
+ }
+ return '<div class="carry-banner chain"><span>🔗 <b>ترحيل تلقائي متسلسل:</b> خانات «تحت اليد» مرحّلة آلياً من متبقي شهر '+periodLabel(pk)+' ومقفلة لضمان دقة السلسلة المالية.</span></div>';
+}
 function vF1(m){
- const ks=monthKeys(),isBase=ks[0]===m.key,idx=ks.indexOf(m.key),pk=idx>0?ks[idx-1]:null;
- const banner=isBase
-  ?'<div class="carry-banner base">⭐ <b>شهر الأساس الافتتاحي ('+periodLabel(m.key)+'):</b> أرصدة «تحت اليد» تُدخل هنا يدوياً وتعتبر الأساس لترحيل كافة الشهور اللاحقة.</div>'
-  :'<div class="carry-banner chain">🔗 <b>ترحيل تلقائي متسلسل:</b> خانات «تحت اليد» مرحّلة آلياً من متبقي شهر '+periodLabel(pk)+' ومقفلة لضمان دقة السلسلة المالية.</div>';
- return banner+F1.map(blockForm).join('')+'<div class="card"><h3>ملحوظة تُطبع أسفل القضاء الجنائي (اتركها فارغة لإخفائها)</h3><textarea data-p="f1.note" rows="3">'+esc(m.f1.note||'')+'</textarea></div><p class="mut">«المبلغ المحصل» يُسحب تلقائياً من إجمالي المتحصلات، والحقول الملونة بالبنفسجي محسوبة تلقائياً ويمكن تجاوزها يدوياً.</p>';
+ return carryBanner(m)+F1.map(blockForm).join('')+'<div class="card"><h3>ملحوظة تُطبع أسفل القضاء الجنائي (اتركها فارغة لإخفائها)</h3><textarea data-p="f1.note" rows="3">'+esc(m.f1.note||'')+'</textarea></div><p class="mut">«المبلغ المحصل» يُسحب تلقائياً من إجمالي المتحصلات، والحقول الملونة بالبنفسجي محسوبة تلقائياً ويمكن تجاوزها يدوياً.</p>';
 }
 function vF2(m){
- const ks=monthKeys(),isBase=ks[0]===m.key,idx=ks.indexOf(m.key),pk=idx>0?ks[idx-1]:null;
- const banner=isBase
-  ?'<div class="carry-banner base">⭐ <b>شهر الأساس الافتتاحي ('+periodLabel(m.key)+'):</b> أرصدة «تحت اليد» تُدخل هنا يدوياً وتعتبر الأساس لترحيل كافة الشهور اللاحقة.</div>'
-  :'<div class="carry-banner chain">🔗 <b>ترحيل تلقائي متسلسل:</b> خانات «تحت اليد» مرحّلة آلياً من متبقي شهر '+periodLabel(pk)+' ومقفلة لضمان دقة السلسلة المالية.</div>';
- return banner+F2.map(blockForm).join('')+'<p class="mut">بيانات الجنح والجنايات في نموذج 2 تُؤخذ تلقائياً من «القضاء الجنائي» في نموذج 1.</p>';
+ return carryBanner(m)+F2.map(blockForm).join('')+'<p class="mut">بيانات الجنح والجنايات في نموذج 2 تُؤخذ تلقائياً من «القضاء الجنائي» في نموذج 1.</p>';
 }
 const normAr=s=>String(s==null?'':s).toLowerCase().replace(/[٠-٩]/g,d=>'0123456789'['٠١٢٣٤٥٦٧٨٩'.indexOf(d)]).replace(/[ً-ْـ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/[\s\-_/\\,،.]+/g,' ');
 function filterTableRows(inp){
@@ -933,7 +974,7 @@ function vEmpCards(m){
   +fl('المؤهل الدراسي','emps.'+i+'.qual','text')+fl('المجموعة الوظيفية','emps.'+i+'.grp','text')+fl('الدرجة','emps.'+i+'.grade','text')
   +fl('درجة القيد بالنقابة','emps.'+i+'.syn','text')+fl('رقم القيد بالنقابة','emps.'+i+'.synNo','text')
   +fl('البدل الوظيفي','emps.'+i+'.jobAllow','number')+fl('بدل الإدارة','emps.'+i+'.mgmtAllow','number')
-  +'<label class="fld"><span>رصيد الأجازات الاعتيادية السنوي (يوم)</span><input type="number" min="0" step="1" data-p="emps.'+i+'.annualQuota" data-empq="'+esc(e.no||e.name)+'" value="'+esc(quotaOf(e))+'" placeholder="حسب الخدمة والسن (21 / 30 / 45)"></label>'
+  +'<label class="fld"><span>رصيد الأجازات الاعتيادية السنوي (يوم)</span>'+numWrap('<input type="number" min="0" step="1" data-p="emps.'+i+'.annualQuota" data-empq="'+esc(e.no||e.name)+'" value="'+esc(quotaOf(e))+'" placeholder="حسب الخدمة والسن (21 / 30 / 45)">')+'</label>'
   +'<label class="fld"><span>الأجازات العارضة والمرضية السنوية</span><input type="text" value="عارضة: '+fmtInt(S.settings.casualDays||7)+' أيام (ثابت) · مرضي: 3 أشهر ('+fmtInt(sickQuotaOf())+' يوم)" disabled class="calc"></label>'
   +fl('المسمى في كشف الحجز (اختياري)','emps.'+i+'.r3job','text','w2')+'<label class="fld chk"><input type="checkbox" data-p="emps.'+i+'.r3off"'+(e.r3off?' checked':'')+'><span>استبعاد من كشف مكافأة الحجز</span></label></div></div>';
  return fBar+'<div class="card"><h3>🪪 بيانات وإعدادات العاملين – الأجازات المستحقة ونموذج 7 وكشف الحجز <button class="btn sm pri" data-act="addemp">＋ إضافة عامل</button><button class="btn sm" data-act="raise">📈 تطبيق الزيادة السنوية</button></h3>'
@@ -1161,19 +1202,22 @@ function vOverview(m){
  const dl=(c,p,inv)=>{if(!pq)return '';const d=c-p;if(Math.abs(d)<.005)return '<em class="dl">= دون تغيير</em>';const good=inv?d<0:d>0;return '<em class="dl '+(good?'up':'dn')+'">'+(d>0?'▲ ':'▼ ')+fmtInt(Math.abs(d))+' عن الشهر السابق</em>';};
  const kp=(l,x,ic,mn,p,inv)=>'<div class="kpi"><i>'+ic+'</i><span>'+l+'</span><b>'+(mn?fmt(x):fmtInt(x))+'</b>'+dl(x,pq?pq[p]:0,inv)+'</div>';
  const tots=keys.map(x=>kpis(S.months[x]).col),mx=Math.max(1,...tots);
- const d=chainDiffs(),es=m.emps||[],lt=LEAVE_TYPES.map(t=>[t,es.reduce((a,e)=>a+num(e[t.k]),0)]);
+ const d=chainDiffs(),heldKs=keys.filter(x=>S.months[x]&&S.months[x].holdChain),es=m.emps||[],lt=LEAVE_TYPES.map(t=>[t,es.reduce((a,e)=>a+num(e[t.k]),0)]);
  const status='<div class="card"><h3>حالة البيانات</h3>'
   +(w.length?w.slice(0,4).map(x=>'<div class="warn '+x[0]+'">'+(x[0]==='bad'?'⛔ ':x[0]==='warn'?'⚠️ ':'ℹ️ ')+esc(x[1])+'</div>').join('')+(w.length>4?'<p class="mut">+ '+(w.length-4)+' ملاحظات أخرى</p>':''):'<p class="ok">✓ لا ملاحظات على بيانات هذا الشهر</p>')
-  +(d.length?'<div class="warn warn">⚠️ أرصدة غير متسلسلة في '+d.length+' شهر</div><button class="btn sm pri" data-act="rechain">🔗 إعادة الترحيل من شهر الأساس</button>':'<p class="ok">✓ الأرصدة متسلسلة من شهر الأساس ('+periodLabel(keys[0])+')</p>')
+  +(heldKs.length?'<div class="warn warn">⏳ شهور أقدم بانتظار اعتماد الترحيل: '+heldKs.map(periodLabel).join('، ')+'</div><button class="btn sm pri" data-act="applychain:'+heldKs[0]+'">🔗 اعتماد وترحيل من '+periodLabel(heldKs[0])+'</button>':'')
+  +(d.length?'<div class="warn warn">⚠️ أرصدة غير متسلسلة في '+d.length+' شهر</div><button class="btn sm pri" data-act="rechain">🔗 إعادة الترحيل من شهر الأساس</button>':(heldKs.length?'':'<p class="ok">✓ الأرصدة متسلسلة من شهر الأساس ('+periodLabel(keys[0])+')</p>'))
   +'<div class="mini"><span>أجازات الشهر</span>'+lt.map(([t,v])=>'<em class="lt-'+t.cls+'">'+t.label+' <b>'+fmtInt(v)+'</b></em>').join('')+'</div></div>';
  return '<div class="kpis k3">'+kp('إجمالي المتحصلات',k.col,'💰',1,'col')+kp('قيمة المصالحات',k.settle,'🤝',1,'settle')+kp('متبقي الحجز الإداري',k.seiz,'📁',0,'seiz',1)+kp('عمالية متبقية',k.lab,'👷',0,'lab',1)+kp('مدنية متبقية',k.civ,'⚖️',0,'civ',1)+kp('الأحكام المنفذة (متبقي)',k.exe,'📜',1,'exe',1)+'</div>'
   +'<div class="ovg"><div class="card"><h3>إجمالي المتحصلات شهرياً</h3><div class="bars">'+keys.map((x,i)=>'<div class="bar'+(x===m.key?' cur':'')+'"><b>'+fmtInt(tots[i])+'</b><i style="height:'+Math.max(3,Math.round(tots[i]/mx*130))+'px"></i><span>'+shortLabel(x)+'</span></div>').join('')+'</div></div>'+status+'</div>';
 }
 function vLog(m){
- const keys=monthKeys(),d=chainDiffs();
- return '<div class="card"><h3>سجل الشهور (قاعدة البيانات)</h3><p class="mut" style="margin-top:-4px">أقدم شهر ('+periodLabel(keys[0])+') هو الأساس وتُدخل أرصدته الافتتاحية يدوياً؛ كل شهر بعده يبدأ بمتبقي الشهر السابق.'+(d.length?'':' ✓ الأرصدة متسلسلة.')+'</p>'+(d.length?'<div class="warn warn">⚠️ أرصدة افتتاحية غير متسلسلة في: '+d.map(x=>periodLabel(x[0])).join('، ')+'</div><div class="btns"><button class="btn pri" data-act="rechain">🔗 إعادة ترحيل الأرصدة من الشهر الأساس</button></div>':'')
+ const keys=monthKeys(),d=chainDiffs(),heldKs=keys.filter(x=>S.months[x]&&S.months[x].holdChain);
+ return '<div class="card"><h3>سجل الشهور (قاعدة البيانات)</h3><p class="mut" style="margin-top:-4px">أقدم شهر ('+periodLabel(keys[0])+') هو الأساس وتُدخل أرصدته الافتتاحية يدوياً؛ كل شهر متصل بعده يبدأ بمتبقي الشهر السابق.'+(d.length||heldKs.length?'':' ✓ الأرصدة متسلسلة.')+'</p>'
+ +(heldKs.length?'<div class="warn warn">⏳ شهور أقدم قيد الإدخال (لم تُرحَّل بعد لحماية الشهور اللاحقة): '+heldKs.map(periodLabel).join('، ')+'</div><div class="btns">'+heldKs.map(hk=>'<button class="btn pri" data-act="applychain:'+hk+'">🔗 اعتماد وترحيل من '+periodLabel(hk)+'</button>').join('')+'</div>':'')
+ +(d.length?'<div class="warn warn">⚠️ أرصدة افتتاحية غير متسلسلة في: '+d.map(x=>periodLabel(x[0])).join('، ')+'</div><div class="btns"><button class="btn pri" data-act="rechain">🔗 إعادة ترحيل الأرصدة من الشهر الأساس</button></div>':'')
  +'<div class="tw"><table class="et"><thead><tr><th>الشهر</th><th>المتحصلات</th><th>المصالحات</th><th>الحجز الإداري المتبقي</th><th>عمالية</th><th>مدنية</th><th>آخر تعديل</th><th></th></tr></thead><tbody>'
- +keys.slice().reverse().map(x=>{const q=kpis(S.months[x]);return '<tr><td><b>'+periodLabel(x)+'</b>'+(x===keys[0]?' <span class="tag">شهر الأساس</span>':'')+'</td><td>'+fmt(q.col)+'</td><td>'+fmt(q.settle)+' ('+fmtInt(q.settleN)+')</td><td>'+fmtInt(q.seiz)+'</td><td>'+fmtInt(q.lab)+'</td><td>'+fmtInt(q.civ)+'</td><td>'+new Date(S.months[x].updatedAt).toLocaleDateString('en-GB')+'</td><td><button class="btn sm" data-act="openmonth:'+x+'">فتح</button> <button class="btn sm bad" data-act="delmonth:'+x+'">حذف</button></td></tr>';}).join('')+'</tbody></table></div></div>';
+ +keys.slice().reverse().map(x=>{const q=kpis(S.months[x]);return '<tr><td><b>'+periodLabel(x)+'</b>'+(x===keys[0]?' <span class="tag">شهر الأساس</span>':'')+(S.months[x].holdChain?' <span class="tag u">بانتظار الترحيل</span>':'')+'</td><td>'+fmt(q.col)+'</td><td>'+fmt(q.settle)+' ('+fmtInt(q.settleN)+')</td><td>'+fmtInt(q.seiz)+'</td><td>'+fmtInt(q.lab)+'</td><td>'+fmtInt(q.civ)+'</td><td>'+new Date(S.months[x].updatedAt).toLocaleDateString('en-GB')+'</td><td><button class="btn sm" data-act="openmonth:'+x+'">فتح</button> <button class="btn sm bad" data-act="delmonth:'+x+'">حذف</button></td></tr>';}).join('')+'</tbody></table></div></div>';
 }
 function vPrn(m){
  const s=S.settings;
@@ -1255,7 +1299,7 @@ document.addEventListener('input',e=>{
  const p=t.dataset.p;if(!p)return;const m=M();if(!m)return;
  setP(m,p,t.type==='checkbox'?t.checked:t.value);
  if(t.dataset.empq!==undefined)setEmpQuota(t.dataset.empq,t.value);
- if(t.dataset.vo!==undefined){const a=t.parentElement.querySelector('input');if(a)a.hidden=t.value!=='amount';}
+ if(t.dataset.vo!==undefined){const a=t.parentElement.querySelector('.num-wrap,input');if(a)a.hidden=t.value!=='amount';}
  m.updatedAt=now();cascadeChain(m.key);refreshCalc();refreshLeaves();persist();
 });
 const ACT={
@@ -1266,15 +1310,28 @@ const ACT={
  openmonth(k){S.ui.cur=k;if(S.ui.tab==='dash')S.ui.tab='col';save();render();},
  newmonth(){
   let k=prevCal();while(S.months[k])k=nextKey(k);
-  openModal('<h2>شهر جديد</h2><div class="fg"><label class="fld"><span>الشهر الذي يخصه البيان</span><input type="month" id="nmKey" value="'+k+'"></label><label class="chk" style="align-self:end"><input type="checkbox" id="nmCarry" checked> ترحيل الأرصدة من الشهر السابق</label></div><p class="mut">عند الترحيل: «المتبقي» ← «تحت اليد»، وتُنسخ بيانات العاملين (وتُصفَّر الأجازات) والقضايا المتداولة. يُضبط تاريخ التقرير تلقائياً على 9 من الشهر التالي ويمكن تعديله.</p><div class="btns"><button class="btn pri" data-act="createmonth">إنشاء</button><button class="btn" data-act="closemodal">إلغاء</button></div>');
+  openModal('<h2>شهر جديد</h2><div class="fg"><label class="fld"><span>الشهر الذي يخصه البيان</span><input type="month" id="nmKey" value="'+k+'"></label><label class="chk" style="align-self:end"><input type="checkbox" id="nmCarry" checked> ترحيل الأرصدة من الشهر السابق</label></div><p class="mut">عند الترحيل: «المتبقي» ← «تحت اليد»، وتُنسخ بيانات العاملين (وتُصفَّر الأجازات) والقضايا المتداولة. وإذا كان الشهر الجديد أقدم من شهور موجودة فلن تُعدَّل أرصدة الشهور اللاحقة تلقائياً حتى تنتهي من إدخاله وتعتمد الترحيل.</p><div class="btns"><button class="btn pri" data-act="createmonth">إنشاء</button><button class="btn" data-act="closemodal">إلغاء</button></div>');
  },
  createmonth(){
   const k=$('#nmKey').value;if(!/^\d{4}-\d{2}$/.test(k))return toast('اختر الشهر');
   if(S.months[k])return toast('هذا الشهر موجود بالفعل');
-  const m=newMonth(k,$('#nmCarry').checked);S.months[k]=m;delete S.deleted[k];S.ui.cur=k;S.ui.tab='col';closeModal();cascadeChain();persist();render();
-  if(monthKeys().some(x=>x>k))toast(carryHint(k));
+  const isOlder=monthKeys().some(x=>x>k);
+  const m=newMonth(k,$('#nmCarry').checked);
+  if(isOlder)m.holdChain=true;
+  S.months[k]=m;delete S.deleted[k];S.ui.cur=k;S.ui.tab='col';closeModal();
+  if(!isOlder)cascadeChain();
+  persist();render();
+  if(isOlder)toast('تم إنشاء '+periodLabel(k)+' دون المساس بأرصدة الشهور اللاحقة؛ بعد إدخال بياناته اضغط «اعتماد وترحيل الأرصدة»');
+ },
+ applychain(k){
+  const m=S.months[k];if(!m)return;
+  if(!confirm('اعتماد بيانات '+periodLabel(k)+' وترحيل متبقي أرصدته إلى الشهور اللاحقة المتصلة؟'))return;
+  delete m.holdChain;m.updatedAt=now();
+  const n=cascadeChain(k);persist();render();
+  toast('تم اعتماد '+periodLabel(k)+' وترحيل الأرصدة في '+n+' شهر بنجاح');
  },
  rechain(){
+  Object.values(S.months).forEach(m=>{if(m&&m.holdChain)delete m.holdChain;});
   const n=rechainAll();persist();render();toast('تمت إعادة تسلسل وترحيل الأرصدة في '+n+' شهر بنجاح');
  },
  delmonth(k){
@@ -1333,7 +1390,25 @@ const ACT={
  restore(){$('#restoreFile').click();},
  clearlogo(){S.settings.logo='';S.settings.updatedAt=now();persist();openSettings();}
 };
+document.addEventListener('wheel',e=>{
+ const el=document.activeElement;
+ if(el&&el.tagName==='INPUT'&&el.type==='number')el.blur();
+},{passive:true});
 document.addEventListener('click',e=>{
+ const nb=e.target.closest('.nbtn[data-step]');
+ if(nb){
+  e.preventDefault();
+  const wrap=nb.closest('.num-wrap'),el=wrap&&wrap.querySelector('input');
+  if(el&&!el.readOnly&&!el.disabled){
+   const d=Number(nb.dataset.step)||0;
+   let nx=Math.round((num(el.value)+d)*100)/100;
+   if(el.min!==''&&nx<Number(el.min))nx=Number(el.min);
+   if(nx<0)nx=0;
+   el.value=nx;
+   el.dispatchEvent(new Event('input',{bubbles:true}));
+  }
+  return;
+ }
  const a=e.target.closest('[data-act]');if(!a)return;
  if(a.dataset.act==='closebg'){if(e.target===a)closeModal();return;}
  const [act,...ar]=a.dataset.act.split(':');if(ACT[act])ACT[act](...ar);
@@ -1363,7 +1438,7 @@ function newMonth(key,carry){
  const ks=monthKeys().filter(k=>k<key),pk=ks[ks.length-1];
  if(carry&&pk){
   const pm=S.months[pk],pv=ctx(pm);
-  CARRY.forEach(([t,s])=>setP(m,t,pv(s)));
+  if(isContiguous(pk,key)&&!pm.holdChain)CARRY.forEach(([t,s])=>setP(m,t,pv(s)));
   m.f1.note=(pm.f1&&pm.f1.note)||'';
   m.emps=clone(pm.emps||[]).map(e=>Object.assign(e,{leave:'',leaveCas:'',leaveSick:''}));
   if(key.slice(0,4)>pk.slice(0,4))applyRaise(m.emps);
@@ -1372,13 +1447,15 @@ function newMonth(key,carry){
  return m;
 }
 
-/* إعادة ترحيل الأرصدة: كل شهر بعد شهر الأساس يأخذ «تحت اليد» من متبقي الشهر الذي قبله مباشرة */
+/* إعادة ترحيل الأرصدة: كل شهر متصل بعد شهر الأساس يأخذ «تحت اليد» من متبقي الشهر الذي قبله مباشرة */
 function chainDiffs(){
  const ks=monthKeys(),out=[];
  for(let i=1;i<ks.length;i++){
-  const m=S.months[ks[i]],pv=ctx(S.months[ks[i-1]]),v=ctx(m);
+  const pk=ks[i-1],ck=ks[i],pm=S.months[pk],m=S.months[ck];
+  if(!pm||!m||!isContiguous(pk,ck)||pm.holdChain)continue;
+  const pv=ctx(pm),v=ctx(m);
   const d=CARRY.filter(([t,s])=>Math.abs(v(t)-pv(s))>0.005).map(([t])=>t);
-  if(d.length)out.push([ks[i],d]);
+  if(d.length)out.push([ck,d]);
  }
  return out;
 }
@@ -1389,9 +1466,10 @@ function cascadeChain(fromKey,silent){
  const startIdx=fromKey?Math.max(1,ks.indexOf(fromKey)+1):1;
  let changes=0;
  for(let i=startIdx;i<ks.length;i++){
-  const prevM=S.months[ks[i-1]];
-  const curM=S.months[ks[i]];
+  const prevK=ks[i-1],curK=ks[i];
+  const prevM=S.months[prevK],curM=S.months[curK];
   if(!prevM||!curM)continue;
+  if(!isContiguous(prevK,curK)||prevM.holdChain)continue;
   const pv=ctx(prevM);
   let ch=false;
   CARRY.forEach(([target,source])=>{
@@ -1505,7 +1583,7 @@ function getGasCode(){
  if(m)sid=m[1];
  return GAS_TEMPLATE.replace('__TOKEN__',tok).replace('__SHEET_ID__',sid);
 }
-const sf=(p,l,t)=>'<label class="fld"><span>'+l+'</span><input data-s="'+p+'" type="'+(t||'text')+'" value="'+esc(getP(S.settings,p))+'"></label>';
+const sf=(p,l,t)=>{const h='<input data-s="'+p+'" type="'+(t||'text')+'" value="'+esc(getP(S.settings,p))+'">';return '<label class="fld"><span>'+l+'</span>'+(t==='number'?numWrap(h):h)+'</label>';};
 function openSettings(){
  const s=S.settings,hasFS=!!window.showSaveFilePicker;
  openModal('<h2>⚙️ الإعدادات والمزامنة</h2>'
